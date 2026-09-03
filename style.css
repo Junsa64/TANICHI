@@ -305,6 +305,11 @@ body.compacta .encabezado-vista p { display: none; }
 .nav-btn .nav-ico { color: var(--nav-c, currentColor); }
 .nav-btn.activo .nav-ico { color: inherit; }
 .nav-btn.activo .badge-tab.ok { background: var(--papel); color: var(--nav-c, var(--turquesa-osc)); }
+/* Apertura, Punto de venta, Inventario y Corte son el día a día del turno;
+   Fiados, Reportes y Ajustes son consulta/administración: un hueco fijo los
+   separa. Un margin-left:auto no serviría aquí: con los siete botones no
+   suele sobrar espacio en la fila para que lo repartiera. */
+.nav-separador { flex: 0 0 24px; border-left: var(--borde); background: var(--fondo); }
 .nav-fin { margin-left: auto; border-right: 0; border-left: var(--borde); }
 
 .badge-tab {
