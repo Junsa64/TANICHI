@@ -311,17 +311,16 @@ function renderEgreso() {
   }
 
   /* --- de qué cuenta sale, y en un traspaso a cuál entra ---
-     La tarjeta de crédito sólo se ofrece si está activada en Ajustes. Y sólo
-     como forma de PAGAR (origen de una compra, o destino de un traspaso): de
-     una tarjeta no se saca efectivo, así que nunca es origen de un traspaso. */
-  const conTC = CONFIG.tarjetaCreditoActiva;
+     La tarjeta de crédito sólo se ofrece como forma de PAGAR (origen de una
+     compra, o destino de un traspaso): de una tarjeta no se saca efectivo,
+     así que nunca es origen de un traspaso. */
   setText('egreso-origen-lbl', esTraspaso ? '¿De qué cuenta sale?' : '¿Cómo lo pagas?');
   setHTML('egreso-origen', botonesCuenta(EGRESO.origen, 'fijarOrigenEgreso',
-    esTraspaso ? 'tc' : (conTC ? [] : 'tc')));
+    esTraspaso ? 'tc' : []));
   show('egreso-destino-wrap', esTraspaso, 'block');
   if (esTraspaso) {
     setHTML('egreso-destino', botonesCuenta(EGRESO.destino, 'fijarDestinoEgreso',
-      conTC ? [EGRESO.origen] : [EGRESO.origen, 'tc']));
+      [EGRESO.origen]));
   }
 
   const desc = document.getElementById('egreso-desc');

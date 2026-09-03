@@ -25,11 +25,8 @@ function renderApertura() {
   setVal('ap-notas', TURNO.notas || '');
   setVal('ap-mp-inicial', TURNO.mpInicial || '');
   setVal('ap-cartera-inicial', TURNO.carteraInicial || '');
-  show('ap-tc-wrap', CONFIG.tarjetaCreditoActiva, 'flex');
-  if (CONFIG.tarjetaCreditoActiva) {
-    setText('ap-tc-lbl', `Debías en ${CUENTAS.tc.largo.toLowerCase()} al abrir`);
-    setVal('ap-tc-inicial', TURNO.tcInicial || '');
-  }
+  setText('ap-tc-lbl', `Debías en ${CUENTAS.tc.largo.toLowerCase()} al abrir`);
+  setVal('ap-tc-inicial', TURNO.tcInicial || '');
 
   construirTablaDenominaciones('apertura');
   aplicarModoConteo('apertura');
@@ -537,16 +534,10 @@ function renderPanelSaldos() {
   show('sal-dotacion-wrap', num(TURNO.dotacion) > 0, 'flex');
   renderTraspasosCorte();
 
-  // La tarjeta de crédito sólo aparece si está activa, o si este turno ya
-  // tiene algo capturado (para no esconder datos de un corte anterior).
-  const mostrarTC = CONFIG.tarjetaCreditoActiva ||
-    num(TURNO.tcInicial) || num(TURNO.tcCierre) || (TURNO.traspasos || []).some(t => t.destino === 'tc');
-  show('sal-tc-tarjeta', mostrarTC, 'block');
-  if (mostrarTC) {
-    setText('sal-tc-titulo', CUENTAS.tc.largo);
-    setVal('sal-tc-inicial', TURNO.tcInicial || '');
-    setVal('sal-tc-cierre', TURNO.tcCierre || '');
-  }
+  setText('sal-tc-titulo', CUENTAS.tc.largo);
+  setVal('sal-tc-inicial', TURNO.tcInicial || '');
+  setVal('sal-tc-cierre', TURNO.tcCierre || '');
+  renderProximasFechasTC('sal-tc-proximas');
 
   const c = calcularCuadre();
   setText('sal-mp-esperado', fmt(c.esperadoMp));
@@ -555,11 +546,9 @@ function renderPanelSaldos() {
   setText('sal-cartera-dif', fmtDiff(c.difCart));
   document.getElementById('sal-mp-dif')?.classList.toggle('malo', !igualDinero(c.difMp, 0));
   document.getElementById('sal-cartera-dif')?.classList.toggle('malo', !igualDinero(c.difCart, 0));
-  if (mostrarTC) {
-    setText('sal-tc-esperado', fmt(c.esperadoTC));
-    setText('sal-tc-dif', fmtDiff(c.difTC));
-    document.getElementById('sal-tc-dif')?.classList.toggle('malo', !igualDinero(c.difTC, 0));
-  }
+  setText('sal-tc-esperado', fmt(c.esperadoTC));
+  setText('sal-tc-dif', fmtDiff(c.difTC));
+  document.getElementById('sal-tc-dif')?.classList.toggle('malo', !igualDinero(c.difTC, 0));
 }
 
 function onSaldo(clave, valor) {

@@ -316,6 +316,44 @@ function aplicarAliasTarjetaCredito() {
   CUENTAS.tc.largo = alias || 'Tarjeta de crédito';
 }
 
+/** Próxima fecha en que cae el día `dia` (1-31) del mes, a partir de hoy. */
+function proximaFechaTC(dia) {
+  dia = Math.round(num(dia));
+  if (!dia || dia < 1) return null;
+  dia = Math.min(dia, 31);
+  const diasEnMes = (a, m) => new Date(a, m + 1, 0).getDate();
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  let anio = hoy.getFullYear(), mes = hoy.getMonth();
+  let f = new Date(anio, mes, Math.min(dia, diasEnMes(anio, mes)));
+  if (f < hoy) {
+    mes += 1; if (mes > 11) { mes = 0; anio += 1; }
+    f = new Date(anio, mes, Math.min(dia, diasEnMes(anio, mes)));
+  }
+  return f;
+}
+
+function diasRestantesTexto(f) {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const dias = Math.round((f - hoy) / 86400000);
+  if (dias === 0) return 'hoy';
+  if (dias === 1) return 'mañana';
+  return `en ${dias} días`;
+}
+
+/** Pinta en `elId` cuándo caen el próximo corte y pago de la tarjeta,
+    según lo configurado en Ajustes. Se usa ahí y en Corte → Saldos. */
+function renderProximasFechasTC(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const corte = proximaFechaTC(CONFIG.tarjetaCreditoDiaCorte);
+  const pago  = proximaFechaTC(CONFIG.tarjetaCreditoDiaPago);
+  if (!corte && !pago) { el.textContent = ''; return; }
+  const partes = [];
+  if (corte) partes.push(`Próximo corte: <strong>${fechaCorta(hoyISO(corte))}</strong> (${diasRestantesTexto(corte)})`);
+  if (pago)  partes.push(`Próximo pago: <strong>${fechaCorta(hoyISO(pago))}</strong> (${diasRestantesTexto(pago)})`);
+  el.innerHTML = partes.join(' · ');
+}
+
 const LISTAS_DE_EGRESO = ['proveedores', 'servicios', 'honorarios', 'otrosEgresos'];
 
 /** Cuenta de la que sale un egreso. Lo capturado antes no la traía: era caja. */
@@ -411,7 +449,7 @@ function calcularCuadre(fuente = null) {
   const esperadoTC    = redondear(tcInicial + comprasTC - tras.tc);
   const contadoTC     = redondear(num(c.tcCierre));
   const difTC         = redondear(contadoTC - esperadoTC);
-  const mostrarTC     = CONFIG.tarjetaCreditoActiva || !!(tcInicial || comprasTC || tras.tc || contadoTC);
+  const mostrarTC     = true;
 
   /* Renglones de traspaso, sólo los que mueven la cuenta que se está viendo */
   const renglonesTraspaso = (cuenta) => (c.traspasos || [])
@@ -662,7 +700,7 @@ async function abrirTurno() {
   };
   TURNO.mpInicial      = leerSaldo('ap-mp-inicial', TURNO.mpInicial);
   TURNO.carteraInicial = leerSaldo('ap-cartera-inicial', TURNO.carteraInicial);
-  if (CONFIG.tarjetaCreditoActiva) TURNO.tcInicial = leerSaldo('ap-tc-inicial', TURNO.tcInicial);
+  TURNO.tcInicial = leerSaldo('ap-tc-inicial', TURNO.tcInicial);
   // Al abrir, los saldos de cierre parten de los iniciales: evita cuadres
   // "en rojo" sólo porque el campo estaba vacío.
   if (!TURNO.mpCierre)      TURNO.mpCierre      = TURNO.mpInicial;
@@ -763,6 +801,14 @@ async function cerrarTurno() {
   }
 
   TURNO = turnoVacio();
+  // Para no volver a capturar lo mismo: el turno que sigue abre con lo que
+  // este dejó al cerrar (efectivo, MP, cartera y tarjeta de crédito).
+  TURNO.aperturaModo   = corte.cierreModo || 'rapido';
+  TURNO.piezasApertura = structuredClone(corte.piezasCierre || {});
+  TURNO.fondoRapido    = num(corte.efectivoContado);
+  TURNO.mpInicial      = num(corte.mpCierre);
+  TURNO.carteraInicial = num(corte.carteraCierre);
+  TURNO.tcInicial       = num(corte.tcCierre);
   guardarTurno({ inmediato: true });
   Store.remove(DB.turno);
 

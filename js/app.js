@@ -105,8 +105,10 @@ function renderAjustes() {
   setVal('cfg-rec-cada', CONFIG.recargaCada);
   setVal('cfg-rec-monto', CONFIG.recargaMonto);
   setVal('cfg-com-envio', CONFIG.comisionEnvio);
-  document.getElementById('cfg-tc-activa').checked = CONFIG.tarjetaCreditoActiva === true;
   setVal('cfg-tc-alias', CONFIG.tarjetaCreditoAlias);
+  setVal('cfg-tc-corte', CONFIG.tarjetaCreditoDiaCorte || '');
+  setVal('cfg-tc-pago', CONFIG.tarjetaCreditoDiaPago || '');
+  renderProximasFechasTC('cfg-tc-proximas');
   setVal('cfg-stockmin', CONFIG.stockMinDefault);
   document.getElementById('cfg-respaldo-auto').checked = CONFIG.respaldoAuto !== false;
   document.getElementById('cfg-sin-stock').checked  = CONFIG.permitirSinStock !== false;
@@ -156,8 +158,9 @@ function guardarAjustes() {
     recargaCada: Math.max(1, valOf('cfg-rec-cada', 50)),
     recargaMonto: Math.max(0, valOf('cfg-rec-monto', 2)),
     comisionEnvio: Math.max(0, valOf('cfg-com-envio', 15)),
-    tarjetaCreditoActiva: !!document.getElementById('cfg-tc-activa')?.checked,
     tarjetaCreditoAlias: (document.getElementById('cfg-tc-alias')?.value || '').trim(),
+    tarjetaCreditoDiaCorte: clamp(Math.round(valOf('cfg-tc-corte', 0)), 0, 31) || null,
+    tarjetaCreditoDiaPago: clamp(Math.round(valOf('cfg-tc-pago', 0)), 0, 31) || null,
     stockMinDefault: Math.max(0, valOf('cfg-stockmin', 5)),
     permitirSinStock: !!document.getElementById('cfg-sin-stock')?.checked,
     respaldoAuto: !!document.getElementById('cfg-respaldo-auto')?.checked,
@@ -166,6 +169,7 @@ function guardarAjustes() {
   document.title = `${CONFIG.negocio} · Punto de venta y corte de caja`;
   const marca = document.getElementById('marca-negocio');
   if (marca) marca.title = 'EL TANICHI · versión ' + VERSION_APP;
+  renderProximasFechasTC('cfg-tc-proximas');
   if (TURNO.abierto) renderCorte();
   toast('Ajustes guardados.', 'success');
 }
@@ -340,7 +344,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '28';
+const VERSION_APP = '29';
 
 /**
  * Se cura sola cuando quedó una copia vieja guardada.

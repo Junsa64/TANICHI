@@ -67,8 +67,9 @@ const CONFIG_DEFAULT = {
   stockMinDefault: 5,
   compacta: false,                     // barra de arriba achicada
   comisionEnvio: 15,           // lo que cobras por transferir dinero a un cliente
-  tarjetaCreditoActiva: false, // usar la tarjeta de crédito (de Mercado Pago) para comprar
   tarjetaCreditoAlias: '',     // ej. "Tarjeta BBVA": si se deja vacío usa "Tarjeta de crédito"
+  tarjetaCreditoDiaCorte: null, // día del mes (1-31) en que el banco cierra el periodo
+  tarjetaCreditoDiaPago: null,  // día del mes (1-31) en que vence el pago
   permitirSinStock: true,      // vender aunque el sistema marque 0 (sólo avisa)
   ticketPie: '¡Gracias por su compra!',
   tema: 'claro',

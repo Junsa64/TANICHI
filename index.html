@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="28"/>
+<meta name="tanichi-version" content="29"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=28"/>
+<link rel="stylesheet" href="style.css?v=29"/>
 </head>
 <body>
 
@@ -145,7 +145,7 @@
           <input id="ap-cartera-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
                  oninput="TURNO.carteraInicial=Math.max(0,redondear(this.value)); guardarTurno()"/>
         </label>
-        <label class="campo" id="ap-tc-wrap" style="display:none">
+        <label class="campo" id="ap-tc-wrap">
           <span class="campo-lbl" id="ap-tc-lbl">Debías en la tarjeta al abrir</span>
           <input id="ap-tc-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
                  oninput="TURNO.tcInicial=Math.max(0,redondear(this.value)); guardarTurno()"/>
@@ -583,7 +583,7 @@
         </div>
       </div>
 
-      <div class="tarjeta" id="sal-tc-tarjeta" style="display:none">
+      <div class="tarjeta" id="sal-tc-tarjeta">
         <div class="tarjeta-head"><span class="ico"><span data-ico="tarjeta"></span></span>
           <h2 id="sal-tc-titulo">Tarjeta de crédito</h2></div>
         <div class="tarjeta-body campos">
@@ -604,6 +604,7 @@
             <strong id="sal-tc-esperado" class="cifra-media mono">$0.00</strong>
             <span id="sal-tc-dif" class="dif-chip">$0.00</span>
           </div>
+          <div id="sal-tc-proximas" class="hint ancho"></div>
         </div>
       </div>
     </div>
@@ -760,15 +761,18 @@
       <div class="tarjeta-head"><span class="ico"><span data-ico="tarjeta"></span></span><h2>Tarjeta de crédito</h2></div>
       <div class="tarjeta-body campos">
         <p class="hint ancho">La tarjeta de crédito ligada a tu cuenta de Mercado Pago —para
-          <strong>tus</strong> compras, no para cobrarle a clientes—. Actívala para poder cargarle
-          proveedores y servicios, y para llevarle la cuenta en el corte de caja.</p>
-        <label class="check ancho">
-          <input type="checkbox" id="cfg-tc-activa" onchange="guardarAjustes()"/>
-          <span>Usar la tarjeta de crédito para comprar</span>
-        </label>
+          <strong>tus</strong> compras, no para cobrarle a clientes—. Se puede cargar en Egreso
+          y se le lleva la cuenta en el corte de caja.</p>
         <label class="campo ancho"><span class="campo-lbl">Nombre <em>(opcional)</em></span>
           <input id="cfg-tc-alias" class="input" placeholder="Tarjeta de crédito" maxlength="40"/>
           <span class="hint">Por ejemplo "Tarjeta BBVA": así aparece en el corte y los reportes.</span></label>
+        <label class="campo"><span class="campo-lbl">Día de corte</span>
+          <input id="cfg-tc-corte" class="input mono js-calc" inputmode="numeric" placeholder="Ej. 15" maxlength="2"/>
+          <span class="hint">El día del mes en que tu banco cierra el periodo.</span></label>
+        <label class="campo"><span class="campo-lbl">Día de pago</span>
+          <input id="cfg-tc-pago" class="input mono js-calc" inputmode="numeric" placeholder="Ej. 5" maxlength="2"/>
+          <span class="hint">El día del mes en que vence el pago.</span></label>
+        <div id="cfg-tc-proximas" class="hint ancho"></div>
       </div>
       <div class="tarjeta-pie"><button class="btn btn-primary" onclick="guardarAjustes()">Guardar cambios</button></div>
     </div>
@@ -1468,16 +1472,16 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=28"></script>
-<script src="js/iconos.js?v=28"></script>
-<script src="js/turno.js?v=28"></script>
-<script src="js/pos.js?v=28"></script>
-<script src="js/inventario.js?v=28"></script>
-<script src="js/corte.js?v=28"></script>
-<script src="js/historial.js?v=28"></script>
-<script src="js/reportes.js?v=28"></script>
-<script src="js/fotos.js?v=28"></script>
-<script src="js/fiados.js?v=28"></script>
-<script src="js/app.js?v=28"></script>
+<script src="js/core.js?v=29"></script>
+<script src="js/iconos.js?v=29"></script>
+<script src="js/turno.js?v=29"></script>
+<script src="js/pos.js?v=29"></script>
+<script src="js/inventario.js?v=29"></script>
+<script src="js/corte.js?v=29"></script>
+<script src="js/historial.js?v=29"></script>
+<script src="js/reportes.js?v=29"></script>
+<script src="js/fotos.js?v=29"></script>
+<script src="js/fiados.js?v=29"></script>
+<script src="js/app.js?v=29"></script>
 </body>
 </html>
