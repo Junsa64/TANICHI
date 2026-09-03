@@ -1,0 +1,42 @@
+{
+  "name": "EL TANICHI · Punto de venta",
+  "short_name": "TANICHI",
+  "description": "Punto de venta, inventario, fiados y corte de caja de la tienda EL TANICHI.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdfbf6",
+  "theme_color": "#17a2ad",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    { "src": "./icono-192.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "./icono-512.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" },
+    { "src": "./icono-mask.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Punto de venta",
+      "short_name": "Vender",
+      "description": "Cobrar directamente",
+      "url": "./index.html?ir=pos",
+      "icons": [{ "src": "./icono-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+    },
+    {
+      "name": "Corte de caja",
+      "short_name": "Corte",
+      "description": "Cerrar el turno",
+      "url": "./index.html?ir=corte",
+      "icons": [{ "src": "./icono-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+    },
+    {
+      "name": "Fiados",
+      "short_name": "Fiados",
+      "description": "Ver quién debe",
+      "url": "./index.html?ir=fiados",
+      "icons": [{ "src": "./icono-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+    }
+  ]
+}

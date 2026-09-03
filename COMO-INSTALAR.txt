@@ -1,0 +1,76 @@
+=====================================================================
+  EL TANICHI · Punto de venta
+  Como instalarlo en esta computadora
+=====================================================================
+
+No hay que instalar ningun programa aparte. Solo Windows y Chrome
+(o Microsoft Edge, que ya viene incluido).
+
+
+PASO 1 - COPIAR
+---------------
+Copia esta carpeta completa a la computadora, por ejemplo a:
+    C:\TANICHI
+Debe quedar junto: TANICHI.bat, index.html, la carpeta js, etc.
+
+
+PASO 2 - ABRIR
+--------------
+Doble clic en   TANICHI.bat
+Abre en su propia ventana, sin barra de direcciones.
+
+La primera vez Windows puede preguntar por el Firewall:
+elige "Permitir acceso" en Redes privadas. Es solo para esta
+computadora, nadie de fuera se conecta.
+
+
+PASO 3 - INSTALAR (recomendado)
+-------------------------------
+Ya dentro de la app:   AJUSTES  ->  Instalar como aplicacion  ->  Instalar
+
+Te queda el icono en el escritorio y en el menu de inicio.
+Desde ese momento FUNCIONA SIN INTERNET.
+
+
+PASO 4 - CARGAR TUS PRODUCTOS
+-----------------------------
+INVENTARIO  ->  Importar CSV  ->  elige  catalogo_tanichi.csv
+Son 978 productos con sus codigos de barras, precios y existencias.
+
+(Alternativa: AJUSTES -> Respaldos -> Importar respaldo
+ y eliges  respaldo-catalogo-978.json )
+
+
+PASO 5 - PROTEGER TUS DATOS  ** NO TE LO SALTES **
+--------------------------------------------------
+AJUSTES  ->  Respaldos  ->  Elegir carpeta
+Apunta a una carpeta tuya (o de OneDrive).
+
+A partir de ahi guarda solo despues de cada venta y cada corte.
+Si algo se borra, se restaura en segundos.
+
+
+=====================================================================
+  IMPORTANTE: CADA COMPUTADORA GUARDA SUS PROPIOS DATOS
+=====================================================================
+Las ventas, el inventario y los fiados NO se comparten entre equipos.
+Usa una sola computadora como la caja buena.
+
+Para pasar datos de una a otra:
+   En la primera:  Ajustes -> Respaldos -> Exportar respaldo
+   En la segunda:  Ajustes -> Respaldos -> Importar respaldo
+
+
+DESDE EL CELULAR
+----------------
+Abre este enlace y usa "Agregar a pantalla de inicio":
+https://claude.ai/code/artifact/0e9ccd27-bf57-4c45-beb6-839bb8c3e8a8
+(Sirve para consultar. La version sin internet es la de la computadora.)
+
+
+SI ALGO FALLA
+-------------
+- No abre: revisa que TANICHI.bat este junto a index.html.
+- No aparece "Instalar": cierra y vuelve a abrir con TANICHI.bat.
+- No se actualiza: cierra la app por completo y vuelve a abrirla.
+=====================================================================

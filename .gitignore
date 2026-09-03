@@ -1,0 +1,10 @@
+# Datos de la tienda: no son código del programa, son del negocio.
+# No van a un repositorio público.
+catalogo_tanichi.csv
+respaldo-catalogo-978.json
+
+# Paquete generado por construir-artifact.js
+dist/
+
+# Herramientas de esta sesión de desarrollo, no del programa en sí
+.claude/

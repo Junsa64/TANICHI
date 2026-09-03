@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="oscuro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TANICHI · Punto de venta y corte de caja</title>
+<meta name="description" content="Punto de venta e inventario integrados con el corte de caja por denominación, conciliación de efectivo, Mercado Pago y cartera."/>
+<!-- Versión que ESPERA esta página. index.html siempre se lee del servidor,
+     así que este número siempre es el nuevo. Si el JavaScript que carga trae
+     otro, es que quedó una copia vieja guardada: la app lo detecta al
+     arrancar, la tira y se recarga sola. -->
+<meta name="tanichi-version" content="26"/>
+<link rel="icon" href="icon.png"/>
+<link rel="apple-touch-icon" href="icono-192.jpg"/>
+
+<!-- Instalable como aplicación. El manifiesto y el trabajador de servicio
+     sólo tienen sentido servidos por http(s); abriendo el archivo suelto
+     el navegador los ignora y la app funciona igual. -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#17a2ad"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="TANICHI"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css?v=26"/>
+</head>
+<body>
+
+<!-- Tema aplicado antes de pintar, para que no destelle en claro al abrir -->
+<script>
+  try {
+    var _cfg = JSON.parse(localStorage.getItem('tanichi.config') || '{}');
+    document.documentElement.setAttribute('data-tema', _cfg.tema === 'oscuro' ? 'oscuro' : 'claro');
+    if (_cfg.acento) document.documentElement.setAttribute('data-acento', _cfg.acento);
+  } catch (e) { document.documentElement.setAttribute('data-tema', 'claro'); }
+</script>
+
+<!-- ══════════════════════════════════════════════════ ENCABEZADO ══════ -->
+<header class="cabecera no-imprimir">
+  <div class="cab-marca">
+    <strong id="marca-negocio">EL TANICHI</strong>
+    <span class="placa">Punto de venta</span>
+    <button id="cab-version" class="cab-version" onclick="forzarActualizacion()"
+            title="Versión de la app. Pícala si crees que estás viendo una copia vieja."></button>
+  </div>
+
+  <div id="estado-turno" class="estado cerrado">
+    <span class="punto-vivo"></span>
+    <div><strong>Turno cerrado</strong><span>Abre un turno para vender</span></div>
+  </div>
+
+  <div class="cab-reloj">
+    <span id="reloj-fecha"></span>
+    <strong id="reloj-hora">--:--</strong>
+  </div>
+
+  <div class="cab-acciones">
+    <span id="indicador-guardado" class="guardado" title="Los cambios se guardan solos">Guardado</span>
+    <button class="btn btn-ghost" onclick="abrirHistorial()" title="Historial y análisis (tecla H)"><span data-ico="grafica"></span> Historial</button>
+    <div class="cab-esquina">
+      <button id="btn-tema" class="cab-cuadro" onclick="alternarTema()"
+              title="Cambiar entre claro y oscuro" aria-label="Cambiar entre claro y oscuro"></button>
+      <button id="btn-pantalla" class="cab-cuadro" onclick="alternarPantallaCompleta()"
+              title="Pantalla completa" aria-label="Pantalla completa"></button>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════ MENÚ ═══════ -->
+<nav id="nav-principal" class="nav no-imprimir">
+  <button id="nav-apertura" class="nav-btn" data-vista="apertura" onclick="irA('apertura')">
+    <span class="nav-ico"><span data-ico="candado"></span></span> Apertura
+  </button>
+  <button class="nav-btn" data-vista="pos" onclick="irA('pos')">
+    <span class="nav-ico"><span data-ico="canasta"></span></span> Punto de venta
+  </button>
+  <button class="nav-btn" data-vista="inventario" onclick="irA('inventario')">
+    <span class="nav-ico"><span data-ico="paquete"></span></span> Inventario
+  </button>
+  <button class="nav-btn" data-vista="corte" onclick="irA('corte')">
+    <span class="nav-ico"><span data-ico="balanza"></span></span> Corte de caja
+    <span id="badge-cuadre" class="badge-tab"></span>
+  </button>
+  <button class="nav-btn" data-vista="fiados" onclick="irA('fiados')">
+    <span class="nav-ico"><span data-ico="personas"></span></span> Fiados
+    <span id="badge-fiados" class="badge-tab"></span>
+  </button>
+  <button class="nav-btn" data-vista="reportes" onclick="irA('reportes')">
+    <span class="nav-ico"><span data-ico="grafica"></span></span> Reportes
+  </button>
+  <button class="nav-btn" data-vista="ajustes" onclick="irA('ajustes')">
+    <span class="nav-ico"><span data-ico="ajustes"></span></span> Ajustes
+  </button>
+  <button id="btn-descartar-turno" class="btn btn-ghost peligro-suave nav-fin" onclick="descartarTurno()"
+          title="Cancelar el turno abierto sin guardar el corte">Descartar turno</button>
+</nav>
+
+<main class="contenido">
+
+<!-- ══════════════════════════════════════════════ VISTA: APERTURA ═════ -->
+<section id="vista-apertura" class="vista activa">
+  <div class="encabezado-vista">
+    <h1>Apertura de turno</h1>
+    <p>Cuenta el fondo con el que arrancas. Todo lo que vendas después se registra contra este turno.</p>
+  </div>
+
+  <div id="ap-sugerencia" class="aviso info" style="display:none"></div>
+  <div id="ap-banner-abierto" class="aviso alerta" style="display:none">
+    <span><span data-ico="lapiz"></span></span>
+    <div>El turno <strong>ya está abierto</strong>. Lo que cambies aquí corrige el fondo de apertura y se
+      recalcula el cuadre. <button class="link" onclick="irA('pos')">Volver al punto de venta</button></div>
+  </div>
+
+  <div class="rejilla-apertura">
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="ticket"></span></span><h2>Datos del turno</h2></div>
+      <div class="tarjeta-body campos">
+        <label class="campo">
+          <span class="campo-lbl">Responsable</span>
+          <select id="ap-cajero" class="input js-next" onchange="elegirCajero(this.value)"></select>
+          <input id="ap-cajero-otro" class="input" placeholder="Escribe el nombre" style="display:none"
+                 oninput="TURNO.cajero=this.value; TURNO.horarioAuto=false; guardarTurno()"/>
+        </label>
+        <label class="campo">
+          <span class="campo-lbl">Horario del turno</span>
+          <select id="ap-horario" class="input js-next" onchange="elegirHorario(this.value)"></select>
+          <input id="ap-horario-otro" class="input" placeholder="Ej. 8:00 a 11:00" style="display:none"
+                 oninput="TURNO.horario=this.value; TURNO.horarioAuto=false; guardarTurno()"/>
+        </label>
+        <label class="campo">
+          <span class="campo-lbl">Fecha del corte</span>
+          <input id="ap-fecha" type="date" class="input" oninput="TURNO.fecha=this.value; guardarTurno()"/>
+        </label>
+        <label class="campo">
+          <span class="campo-lbl">Saldo inicial en Mercado Pago</span>
+          <input id="ap-mp-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="TURNO.mpInicial=Math.max(0,redondear(this.value)); guardarTurno()"/>
+        </label>
+        <label class="campo">
+          <span class="campo-lbl">Saldo inicial en cartera</span>
+          <input id="ap-cartera-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="TURNO.carteraInicial=Math.max(0,redondear(this.value)); guardarTurno()"/>
+        </label>
+        <label class="campo" id="ap-tc-wrap" style="display:none">
+          <span class="campo-lbl" id="ap-tc-lbl">Debías en la tarjeta al abrir</span>
+          <input id="ap-tc-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="TURNO.tcInicial=Math.max(0,redondear(this.value)); guardarTurno()"/>
+        </label>
+        <label class="campo ancho">
+          <span class="campo-lbl">Notas del turno <em>(opcional)</em></span>
+          <textarea id="ap-notas" class="input" rows="2" placeholder="Algo que deba saber quien revise el corte…"
+                    oninput="TURNO.notas=this.value; guardarTurno()"></textarea>
+        </label>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head">
+        <span class="ico"><span data-ico="moneda"></span></span><h2>Fondo de caja</h2>
+        <div id="modo-apertura" class="segmentado">
+          <button class="seg-btn activo" data-modo="conteo" onclick="cambiarModoConteo('apertura','conteo')">Contar piezas</button>
+          <button class="seg-btn" data-modo="rapido" onclick="cambiarModoConteo('apertura','rapido')">Sólo el total</button>
+        </div>
+      </div>
+
+      <div id="rapido-apertura" class="captura-rapida" style="display:none">
+        <span class="campo-lbl">Total de efectivo con el que abres</span>
+        <input id="rapido-apertura-input" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+               oninput="onRapido('apertura', this.value)"/>
+      </div>
+
+      <div id="tabla-apertura" class="tabla-scroll">
+        <table class="tabla-denom">
+          <thead><tr><th>Denominación</th><th>Piezas / importe</th><th class="der">Total</th></tr></thead>
+          <tbody id="denom-apertura"></tbody>
+        </table>
+      </div>
+
+      <div class="tarjeta-pie total-fondo">
+        <div><span class="campo-lbl">Fondo inicial</span><span id="piezas-apertura" class="hint">0 piezas contadas</span></div>
+        <strong id="total-apertura" class="cifra-grande mono">$0.00</strong>
+      </div>
+
+      <div class="tarjeta-pie">
+        <button id="btn-abrir-turno" class="btn btn-primary grande ancho-total" onclick="abrirTurno()"><span data-ico="candado"></span> Abrir turno y empezar a vender</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ VISTA: PUNTO DE VENTA ══ -->
+<section id="vista-pos" class="vista">
+  <div class="pos-layout">
+
+    <div class="pos-tienda">
+      <div class="pos-barra">
+        <button class="btn btn-ghost" data-accion="venta" onclick="abrirVentaLibre()" title="Cobrar algo que no está en el catálogo (tecla V)"><span data-ico="mas"></span> Venta libre</button>
+        <button class="btn btn-ghost" data-accion="recarga" onclick="abrirRecarga()" title="Registrar una recarga de tiempo aire (tecla R)"><span data-ico="telefono"></span> Recarga</button>
+        <button class="btn btn-ghost" data-accion="envio" onclick="abrirEnvio()" title="Transfieres tu dinero y el cliente te paga en efectivo (Alt+T)"><span data-ico="banco"></span> Enviar</button>
+        <button class="btn btn-ghost" data-accion="abono" onclick="abrirCobroAbono()" title="Cobrar un abono de un cliente con fiado"><span data-ico="personas"></span> Abono</button>
+        <button class="btn btn-ghost" data-accion="devol" onclick="abrirBuscarVenta()" title="El cliente regresa mercancía"><span data-ico="regresar"></span> Devolución</button>
+        <button class="btn btn-ghost" data-accion="consulta" onclick="abrirConsulta()" title="Ver, reimprimir o corregir un ticket ya cobrado (tecla F3)"><span data-ico="recibo"></span> Consultar ticket</button>
+        <button class="btn btn-ghost" data-accion="egreso" onclick="abrirEgreso()" title="Registrar dinero que sale de la caja: proveedores, servicios, sueldos (Alt+E)"><span data-ico="subir"></span> Egreso</button>
+      </div>
+
+      <div id="pos-categorias" class="chips tira"></div>
+      <div class="pos-buscador-fila">
+        <input id="pos-buscar" class="input buscador" placeholder="Buscar por nombre o código… (F2)"
+               oninput="onBuscarProducto(this.value)" onkeydown="onBuscarKey(event)" autocomplete="off"/>
+      </div>
+      <div class="pos-catalogo">
+        <div id="pos-productos" class="rejilla-productos"></div>
+      </div>
+
+      <!-- Fijo al pie de la columna: se ve siempre, sin recorrer el catálogo -->
+      <div class="pos-resumen">
+        <div class="pos-kpis">
+          <div class="kpi"><span>Ventas</span><strong id="pos-turno-ventas">0</strong></div>
+          <div class="kpi"><span>Vendido</span><strong id="pos-turno-total" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Efectivo</span><strong id="pos-turno-efectivo" class="mono">$0.00</strong></div>
+          <div class="kpi" title="Tarjeta y transferencias"><span>Digital</span><strong id="pos-turno-digital" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Fiado</span><strong id="pos-turno-fiado" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Recargas</span><strong id="pos-turno-recargas" class="mono">$0.00</strong></div>
+          <div class="kpi" title="Dinero que salió de la caja en este turno"><span>Egresos</span><strong id="pos-turno-egresos" class="mono">$0.00</strong></div>
+          <div class="kpi" title="Dinero que transferiste a clientes en este turno"><span>Enviado</span><strong id="pos-turno-enviado" class="mono">$0.00</strong></div>
+        </div>
+        <button class="btn btn-ghost pos-ver-movs" onclick="abrirMovimientos()">
+          <span data-ico="recibo"></span> Ver movimientos
+        </button>
+      </div>
+    </div>
+
+    <aside class="pos-carrito-panel">
+      <div class="carrito-head">
+        <h2 id="pos-folio">Ticket</h2>
+        <span id="pos-num-articulos" class="hint">0 artículo(s)</span>
+        <button class="btn-icono peligro" onclick="vaciarCarrito()" title="Vaciar carrito"><span data-ico="bote"></span></button>
+      </div>
+
+      <div id="pos-tickets" class="tickets-barra"></div>
+      <div id="pos-carrito" class="carrito-lista"></div>
+
+      <div class="carrito-totales">
+        <div class="ct-linea"><span>Subtotal</span><span id="pos-subtotal" class="mono">$0.00</span></div>
+        <div class="ct-linea">
+          <label for="pos-descuento-input">Descuento</label>
+          <span class="ct-desc">
+            <input id="pos-descuento-input" class="input-mini mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="aplicarDescuento(this.value)"/>
+            <span id="pos-descuento-val" class="mono malo">$0.00</span>
+          </span>
+        </div>
+        <div class="ct-linea total"><span>Total</span><span id="pos-total" class="mono">$0.00</span></div>
+      </div>
+
+      <button id="btn-cobrar" class="btn btn-cobrar" onclick="abrirCobro()" disabled>Cobrar</button>
+      <p class="hint centro">Escribe o pasa el lector y va solo al buscador · Enter agrega lo encontrado<br>
+        F12 o F4 cobrar · F2 buscar · F8 barra chica · F9 apartar ticket · Alt+V venta libre · Alt+R recarga · Alt+D devolución · Alt+E egreso · Alt+T enviar</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ VISTA: INVENTARIO ══════ -->
+<section id="vista-inventario" class="vista">
+  <div class="encabezado-vista">
+    <h1>Inventario</h1>
+    <p>Tu catálogo de productos. El punto de venta descuenta las existencias en cada venta.</p>
+  </div>
+
+  <div class="inv-kpis">
+    <div class="kpi"><span>Productos activos</span><strong id="inv-kpi-productos">0</strong></div>
+    <div class="kpi"><span>Con existencia baja</span><strong id="inv-kpi-bajos" class="aviso-color">0</strong></div>
+    <div class="kpi"><span>Agotados</span><strong id="inv-kpi-agotados" class="malo">0</strong></div>
+    <div class="kpi ancho">
+      <span>Valor del inventario a precio de venta</span>
+      <strong id="inv-kpi-valor" class="mono">$0.00</strong>
+      <span id="inv-kpi-costo" class="hint">Costo: $0.00</span>
+    </div>
+  </div>
+
+  <div id="inv-alerta" class="aviso alerta" style="display:none"></div>
+
+  <div class="tarjeta">
+    <div class="tarjeta-head barra-inventario">
+      <input class="input buscador" placeholder="Buscar producto, código o categoría…" oninput="buscarInventario(this.value)"/>
+      <div id="inv-filtros" class="chips">
+        <button class="chip activo" data-filtro="todos" onclick="filtrarInventario('todos')">Todos</button>
+        <button class="chip" data-filtro="bajos" onclick="filtrarInventario('bajos')">Por resurtir</button>
+        <button class="chip" data-filtro="inactivos" onclick="filtrarInventario('inactivos')">Inactivos</button>
+      </div>
+      <select class="input compacto" onchange="ordenarInventario(this.value)" aria-label="Ordenar por">
+        <option value="nombre">Ordenar: nombre</option>
+        <option value="categoria">Ordenar: categoría</option>
+        <option value="stock">Ordenar: existencia</option>
+        <option value="precio">Ordenar: precio</option>
+      </select>
+      <button class="btn btn-primary" onclick="abrirProducto()"><span data-ico="mas"></span> Nuevo producto</button>
+    </div>
+
+    <div class="tabla-scroll">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Producto</th><th class="der">Precio</th>
+            <th class="der oculta-movil">Costo</th><th class="der oculta-movil">Margen</th>
+            <th class="der">Existencia</th><th class="oculta-movil">Estado</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="inv-tabla-cuerpo"></tbody>
+      </table>
+    </div>
+
+    <div class="tarjeta-pie acciones-pie">
+      <button class="btn btn-ghost" onclick="document.getElementById('import-csv').click()"><span data-ico="bajar"></span> Importar CSV</button>
+      <input type="file" id="import-csv" accept=".csv,text/csv" hidden onchange="importarCatalogoCSV(event)"/>
+      <button class="btn btn-ghost" onclick="exportarCatalogoCSV()"><span data-ico="subir"></span> Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="cargarCatalogoEjemplo()"><span data-ico="rayo"></span> Cargar productos de ejemplo</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ VISTA: CORTE DE CAJA ═══ -->
+<section id="vista-corte" class="vista">
+  <div class="corte-cabecera no-imprimir">
+    <div>
+      <h1>Corte de caja</h1>
+      <p class="hint">
+        <strong id="corte-cajero">—</strong> · turno <strong id="corte-horario">—</strong> ·
+        <span id="corte-fecha"></span> · fondo <span id="corte-fondo" class="mono">$0.00</span>
+      </p>
+    </div>
+  </div>
+
+  <div id="corte-tabs" class="tabs no-imprimir">
+    <button class="tab activo" data-tab="efectivo" onclick="activarTabCorte('efectivo')"><span data-ico="billete"></span> Efectivo</button>
+    <button class="tab" data-tab="ingresos" onclick="activarTabCorte('ingresos')"><span data-ico="subir"></span> Ingresos</button>
+    <button class="tab" data-tab="egresos" onclick="activarTabCorte('egresos')"><span data-ico="subir"></span> Egresos</button>
+    <button class="tab" data-tab="saldos" onclick="activarTabCorte('saldos')"><span data-ico="banco"></span> Saldos</button>
+    <button class="tab" data-tab="cuadre" onclick="activarTabCorte('cuadre')"><span data-ico="balanza"></span> Cuadre</button>
+    <button class="tab" data-tab="reporte" onclick="activarTabCorte('reporte')"><span data-ico="ticket"></span> Reporte</button>
+  </div>
+
+  <!-- ---------------------------------------------------- EFECTIVO ---- -->
+  <div id="panel-efectivo" class="panel-corte activo">
+    <div class="rejilla-efectivo">
+      <div class="tarjeta">
+        <div class="tarjeta-head">
+          <span class="ico"><span data-ico="moneda"></span></span><h2>Cuenta el efectivo que entregas</h2>
+          <div id="modo-cierre" class="segmentado">
+            <button class="seg-btn activo" data-modo="conteo" onclick="cambiarModoConteo('cierre','conteo')">Contar piezas</button>
+            <button class="seg-btn" data-modo="rapido" onclick="cambiarModoConteo('cierre','rapido')">Sólo el total</button>
+          </div>
+        </div>
+
+        <div id="rapido-cierre" class="captura-rapida" style="display:none">
+          <span class="campo-lbl">Total de efectivo en caja al cerrar</span>
+          <input id="rapido-cierre-input" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="onRapido('cierre', this.value)"/>
+        </div>
+
+        <div id="tabla-cierre" class="tabla-scroll">
+          <table class="tabla-denom">
+            <thead><tr><th>Denominación</th><th>Piezas / importe</th><th class="der">Total</th></tr></thead>
+            <tbody id="denom-cierre"></tbody>
+          </table>
+        </div>
+
+        <div class="tarjeta-pie total-fondo">
+          <div><span class="campo-lbl">Efectivo contado</span><span id="piezas-cierre" class="hint">0 piezas contadas</span></div>
+          <strong id="total-cierre" class="cifra-grande mono">$0.00</strong>
+        </div>
+      </div>
+
+      <div class="tarjeta resaltada">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="balanza"></span></span><h2>¿Cuánto deberías tener?</h2></div>
+        <div class="tarjeta-body">
+          <div class="objetivo">
+            <span class="campo-lbl">Efectivo esperado en caja</span>
+            <strong id="efectivo-esperado" class="cifra-grande mono">$0.00</strong>
+            <span id="efectivo-dif" class="dif-chip ok">Cuadra exacto</span>
+          </div>
+          <p class="hint">
+            Se calcula solo: fondo de apertura + ventas en efectivo + cobros de fiado + otros ingresos
+            + recargas − egresos − dotación a cartera. Captura primero ingresos y egresos y vuelve aquí.
+          </p>
+          <div class="atajos-panel">
+            <button class="btn btn-ghost" onclick="activarTabCorte('ingresos')">Ir a ingresos →</button>
+            <button class="btn btn-ghost" onclick="activarTabCorte('egresos')">Ir a egresos →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------------------------------------------- INGRESOS ---- -->
+  <div id="panel-ingresos" class="panel-corte">
+    <div class="tarjeta">
+      <div class="tarjeta-head">
+        <span class="ico"><span data-ico="subir"></span></span><h2>Ingresos del turno</h2>
+        <span id="ingresos-tickets" class="hint"></span>
+      </div>
+      <div class="tarjeta-body">
+        <p id="ingresos-nota" class="hint explicativo"></p>
+        <div class="ing-encabezado">
+          <span></span><span class="mini-lbl">Punto de venta</span>
+          <span class="mini-lbl">Captura manual</span><span class="mini-lbl der">Total</span>
+        </div>
+        <div id="ingresos-filas"></div>
+
+        <div id="caja-comision" class="comision" style="display:none">
+          <span>Cobrado al cliente</span><span id="com-bruto" class="mono">$0.00</span>
+          <span id="com-pct" class="malo">− Comisión terminal</span><span id="com-monto" class="mono malo">$0.00</span>
+          <span class="bueno">= Neto que llega al banco</span><span id="com-neto" class="mono bueno">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rejilla-2">
+      <div class="tarjeta">
+        <div class="tarjeta-head">
+          <span class="ico"><span data-ico="mas"></span></span><h2>Otros ingresos en efectivo</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('otrosIngresos')">+ Agregar</button>
+        </div>
+        <div class="tarjeta-body">
+          <div id="lista-otros-ingresos" class="conceptos"></div>
+          <div class="linea-total"><span>Total</span><strong id="otros-ingresos-total" class="mono bueno">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head">
+          <span class="ico"><span data-ico="telefono"></span></span><h2>Recargas</h2>
+          <span id="rec-num" class="hint">0 recarga(s)</span>
+        </div>
+        <div class="tarjeta-body">
+          <div class="resumen-lineas">
+            <div class="rl"><span>Cobrado en efectivo</span><strong id="rec-total" class="mono bueno">$0.00</strong></div>
+            <div class="rl"><span>Comisión que devuelve Mercado Pago</span><strong id="rec-comision" class="mono bueno">$0.00</strong></div>
+            <div class="rl total"><span>Sale neto de tu saldo MP</span><strong id="rec-neto" class="mono malo">$0.00</strong></div>
+          </div>
+          <p id="rec-regla" class="hint"></p>
+          <div id="lista-recargas" class="mini-lista"></div>
+          <button id="btn-recarga-corte" class="btn btn-ghost ancho-total" onclick="abrirRecarga()"><span data-ico="telefono"></span> Registrar recarga</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta resaltada">
+      <div class="tarjeta-body linea-resumen">
+        <div><span class="campo-lbl">Total de ingresos del turno</span>
+          <strong id="ingresos-total" class="cifra-grande mono bueno">$0.00</strong></div>
+        <div class="der"><span class="campo-lbl">Vendido a crédito (por cobrar)</span>
+          <strong id="ingresos-fiado" class="cifra-media mono">$0.00</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ----------------------------------------------------- EGRESOS ---- -->
+  <div id="panel-egresos" class="panel-corte">
+    <div class="rejilla-2">
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="camion"></span></span><h2>Pago a proveedores</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('proveedores')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-proveedores" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-proveedores" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="recibo"></span></span><h2>Servicios</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('servicios')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-servicios" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-servicios" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="persona"></span></span><h2>Honorarios y sueldos</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('honorarios')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-honorarios" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-honorarios" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="subir"></span></span><h2>Otras salidas de efectivo</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('otrosEgresos')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-otrosEgresos" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-otrosEgresos" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta resaltada">
+      <div class="tarjeta-body">
+        <div class="linea-resumen">
+          <span class="campo-lbl">Total de egresos del turno</span>
+          <strong id="egresos-total" class="cifra-grande mono malo">$0.00</strong>
+        </div>
+        <label class="campo ancho">
+          <span class="campo-lbl">Observaciones del corte</span>
+          <textarea id="corte-obs" class="input" rows="3"
+                    placeholder="Cualquier aclaración: un faltante, un pago pendiente, un detalle del turno…"
+                    oninput="onObservaciones(this.value)"></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------ SALDOS ---- -->
+  <div id="panel-saldos" class="panel-corte">
+    <div class="rejilla-2">
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="telefono"></span></span><h2>Mercado Pago</h2></div>
+        <div class="tarjeta-body campos">
+          <label class="campo">
+            <span class="campo-lbl">Saldo al abrir el turno</span>
+            <input id="sal-mp-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('mpInicial', this.value)"/>
+          </label>
+          <label class="campo">
+            <span class="campo-lbl">Retiros o pagos hechos desde MP</span>
+            <input id="sal-mp-retiros" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('mpRetiros', this.value)"/>
+          </label>
+          <label class="campo ancho">
+            <span class="campo-lbl">Saldo que muestra la app al cerrar</span>
+            <input id="sal-mp-cierre" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('mpCierre', this.value)"/>
+          </label>
+          <div class="objetivo compacto ancho">
+            <span class="campo-lbl">Deberías tener</span>
+            <strong id="sal-mp-esperado" class="cifra-media mono">$0.00</strong>
+            <span id="sal-mp-dif" class="dif-chip">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="banco"></span></span><h2>Cartera</h2></div>
+        <div class="tarjeta-body campos">
+          <label class="campo">
+            <span class="campo-lbl">Saldo al abrir el turno</span>
+            <input id="sal-cartera-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('carteraInicial', this.value)"/>
+          </label>
+          <div class="campo ancho" id="sal-traspasos-wrap">
+            <div class="egreso-previos-cab">
+              <span class="campo-lbl">Movimientos entre cuentas</span>
+              <button class="btn btn-ghost compacto" onclick="abrirEgreso('traspaso')">
+                <span data-ico="regresar"></span> Mover dinero
+              </button>
+            </div>
+            <div id="sal-traspasos" class="conceptos-lista"></div>
+            <p class="hint">En cualquier sentido: de la caja a la cartera, de la cartera a la caja,
+              o hacia y desde Mercado Pago. No son gasto, sólo cambian de lugar.</p>
+          </div>
+
+          <label class="campo" id="sal-dotacion-wrap" style="display:none">
+            <span class="campo-lbl">Dotación heredada (de la caja a la cartera)</span>
+            <input id="sal-dotacion" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('dotacion', this.value)"/>
+            <span class="hint">Viene de un corte anterior. Los nuevos movimientos van arriba.</span>
+          </label>
+          <label class="campo ancho">
+            <span class="campo-lbl">Saldo real de la cartera al cerrar</span>
+            <input id="sal-cartera-cierre" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('carteraCierre', this.value)"/>
+          </label>
+          <div class="objetivo compacto ancho">
+            <span class="campo-lbl">Deberías tener</span>
+            <strong id="sal-cartera-esperado" class="cifra-media mono">$0.00</strong>
+            <span id="sal-cartera-dif" class="dif-chip">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tarjeta" id="sal-tc-tarjeta" style="display:none">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="tarjeta"></span></span>
+          <h2 id="sal-tc-titulo">Tarjeta de crédito</h2></div>
+        <div class="tarjeta-body campos">
+          <p class="hint ancho">Tu tarjeta de crédito, ligada a Mercado Pago. No es dinero disponible:
+            es lo que debes. Comprar con ella la sube; pagarla la baja.</p>
+          <label class="campo">
+            <span class="campo-lbl">Debías al abrir el turno</span>
+            <input id="sal-tc-inicial" class="input mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('tcInicial', this.value)"/>
+          </label>
+          <label class="campo ancho">
+            <span class="campo-lbl">Lo que debes según tu estado de cuenta</span>
+            <input id="sal-tc-cierre" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+                   oninput="onSaldo('tcCierre', this.value)"/>
+          </label>
+          <div class="objetivo compacto ancho">
+            <span class="campo-lbl">Deberías deber</span>
+            <strong id="sal-tc-esperado" class="cifra-media mono">$0.00</strong>
+            <span id="sal-tc-dif" class="dif-chip">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint centro">
+      La dotación sale de la caja y entra a la cartera: por eso resta en un lado y suma en el otro.
+    </p>
+  </div>
+
+  <!-- ------------------------------------------------------ CUADRE ---- -->
+  <div id="panel-cuadre" class="panel-corte">
+    <div id="cuadre-resumen" class="semaforo"></div>
+    <div id="cuadre-bloques" class="rejilla-cuadre"></div>
+
+    <div class="tarjeta resaltada">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="grafica"></span></span><h2>Resumen del turno</h2></div>
+      <div class="tarjeta-body">
+        <div class="resumen-lineas">
+          <div class="rl"><span>Venta total del turno</span><strong id="cuadre-venta" class="mono bueno">$0.00</strong></div>
+          <div class="rl"><span>Total físico (caja + cartera)</span><strong id="cuadre-fisico" class="mono">$0.00</strong></div>
+          <div class="rl"><span>Total digital (Mercado Pago)</span><strong id="cuadre-digital" class="mono">$0.00</strong></div>
+          <div class="rl total"><span>Total valorizado</span><strong id="cuadre-total" class="mono oro">$0.00</strong></div>
+        </div>
+        <button id="btn-cerrar-turno" class="btn btn-primary grande ancho-total" onclick="cerrarTurno()">
+          <span data-ico="balanza"></span> Cerrar turno y hacer corte
+        </button>
+        <p class="hint centro">Se guarda el corte en el historial y se genera un respaldo automático.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ----------------------------------------------------- REPORTE ---- -->
+  <div id="panel-reporte" class="panel-corte">
+    <div id="reporte-contenido"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ VISTA: FIADOS ═════ -->
+<section id="vista-fiados" class="vista">
+  <div class="encabezado-vista">
+    <h1>Fiados</h1>
+    <p>Lo que debe cada persona. La cuenta se arma sola con las ventas fiadas y los abonos: no hay que llevarla aparte.</p>
+  </div>
+
+  <div class="inv-kpis">
+    <div class="kpi ancho">
+      <span>Total por cobrar</span>
+      <strong id="fi-total" class="mono">$0.00</strong>
+      <span class="hint"><span id="fi-personas">0</span> persona(s) con saldo</span>
+    </div>
+    <div class="kpi ancho">
+      <span>La cuenta más alta</span>
+      <strong id="fi-mayor" class="mono">$0.00</strong>
+      <span class="hint" id="fi-mayor-quien">—</span>
+    </div>
+    <div class="kpi"><span>Fiado en este turno</span><strong id="fi-fiado-turno" class="mono">$0.00</strong></div>
+    <div class="kpi"><span>Abonado en este turno</span><strong id="fi-abonado-turno" class="mono">$0.00</strong></div>
+  </div>
+
+  <div id="fi-aviso-favor" class="aviso alerta" style="display:none"></div>
+
+  <div class="tarjeta">
+    <div class="tarjeta-head barra-inventario">
+      <input id="fi-buscar" class="input buscador" placeholder="Buscar persona…" oninput="buscarFiado(this.value)" autocomplete="off" data-sin-enter/>
+      <div id="fi-filtros" class="chips">
+        <button class="chip" data-filtro="deben"    onclick="filtrarFiados('deben')">Con saldo</button>
+        <button class="chip" data-filtro="todos"    onclick="filtrarFiados('todos')">Todos</button>
+        <button class="chip" data-filtro="saldados" onclick="filtrarFiados('saldados')">Saldados</button>
+      </div>
+      <button class="btn btn-ghost" onclick="abrirConsulta()"><span data-ico="recibo"></span> Consultar ticket</button>
+      <button class="btn btn-primary" onclick="abrirAltaFiado()"><span data-ico="mas"></span> Agregar fiado</button>
+      <button class="btn btn-ghost" onclick="exportarFiados()"><span data-ico="bajar"></span> Exportar CSV</button>
+    </div>
+    <div id="fi-tabla" class="tabla-scroll"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ VISTA: REPORTES ═════ -->
+<section id="vista-reportes" class="vista">
+  <div class="encabezado-vista">
+    <h1>Reportes</h1>
+    <p>Elige el reporte y el periodo. Cualquiera se imprime o se baja en CSV para abrirlo en Excel.</p>
+  </div>
+
+  <div id="rep-botones" class="rep-botones"></div>
+
+  <div class="rep-periodo no-imprimir">
+    <span class="campo-lbl">Periodo</span>
+    <div class="chips">
+      <button class="chip" onclick="periodoRapido('hoy')">Hoy</button>
+      <button class="chip" onclick="periodoRapido('ayer')">Ayer</button>
+      <button class="chip" onclick="periodoRapido('semana')">7 días</button>
+      <button class="chip" onclick="periodoRapido('mes')">30 días</button>
+      <button class="chip" onclick="periodoRapido('todo')">Todo</button>
+    </div>
+    <label class="campo"><span class="campo-lbl">Desde</span>
+      <input id="rep-desde" type="date" class="input" onchange="onPeriodoReporte()"/></label>
+    <label class="campo"><span class="campo-lbl">Hasta</span>
+      <input id="rep-hasta" type="date" class="input" onchange="onPeriodoReporte()"/></label>
+  </div>
+
+  <div id="rep-contenido" class="tarjeta rep-hoja"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════ VISTA: AJUSTES ══════ -->
+<section id="vista-ajustes" class="vista">
+  <div class="encabezado-vista">
+    <h1>Ajustes</h1>
+    <p>Configura tu negocio, las comisiones que te cobran y los respaldos.</p>
+  </div>
+
+  <div class="rejilla-2">
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="canasta"></span></span><h2>Negocio</h2></div>
+      <div class="tarjeta-body campos">
+        <label class="campo ancho"><span class="campo-lbl">Nombre del negocio</span>
+          <input id="cfg-negocio" class="input"/></label>
+        <label class="campo ancho"><span class="campo-lbl">Mensaje al pie del ticket</span>
+          <input id="cfg-ticket-pie" class="input" placeholder="¡Gracias por su compra!"/></label>
+        <div class="campo ancho">
+          <span class="campo-lbl">Color del sistema</span>
+          <div id="cfg-acentos" class="acentos"></div>
+        </div>
+      </div>
+      <div class="tarjeta-pie"><button class="btn btn-primary" onclick="guardarAjustes()">Guardar cambios</button></div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="moneda"></span></span><h2>Comisiones y existencias</h2></div>
+      <div class="tarjeta-body campos">
+        <label class="campo"><span class="campo-lbl">Comisión de la terminal (%)</span>
+          <input id="cfg-comision" class="input mono js-calc" inputmode="decimal"/>
+          <span class="hint">Lo que descuenta el banco por cada cobro con tarjeta.</span></label>
+        <label class="campo"><span class="campo-lbl">Existencia mínima por defecto</span>
+          <input id="cfg-stockmin" class="input mono js-calc" inputmode="decimal"/>
+          <span class="hint">Por debajo de este número el producto aparece “por resurtir”.</span></label>
+        <label class="check ancho">
+          <input type="checkbox" id="cfg-sin-stock" onchange="guardarAjustes()"/>
+          <span>Dejar vender aunque el sistema marque existencia 0
+            <em class="hint"> — sólo avisa y la existencia queda en negativo, para que sepas qué recontar.
+            Desactívalo si prefieres que el POS lo impida.</em></span>
+        </label>
+        <label class="campo"><span class="campo-lbl">Recargas: por cada</span>
+          <input id="cfg-rec-cada" class="input mono js-calc" inputmode="decimal"/></label>
+        <label class="campo"><span class="campo-lbl">Mercado Pago devuelve</span>
+          <input id="cfg-rec-monto" class="input mono js-calc" inputmode="decimal"/></label>
+        <label class="campo"><span class="campo-lbl">Comisión por enviar dinero</span>
+          <input id="cfg-com-envio" class="input mono js-calc" inputmode="decimal"/>
+          <span class="hint">Lo que cobras por transferir desde tu cuenta. Se puede cambiar en cada envío.</span></label>
+      </div>
+      <div class="tarjeta-pie"><button class="btn btn-primary" onclick="guardarAjustes()">Guardar cambios</button></div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="tarjeta"></span></span><h2>Tarjeta de crédito</h2></div>
+      <div class="tarjeta-body campos">
+        <p class="hint ancho">La tarjeta de crédito ligada a tu cuenta de Mercado Pago —para
+          <strong>tus</strong> compras, no para cobrarle a clientes—. Actívala para poder cargarle
+          proveedores y servicios, y para llevarle la cuenta en el corte de caja.</p>
+        <label class="check ancho">
+          <input type="checkbox" id="cfg-tc-activa" onchange="guardarAjustes()"/>
+          <span>Usar la tarjeta de crédito para comprar</span>
+        </label>
+        <label class="campo ancho"><span class="campo-lbl">Nombre <em>(opcional)</em></span>
+          <input id="cfg-tc-alias" class="input" placeholder="Tarjeta de crédito" maxlength="40"/>
+          <span class="hint">Por ejemplo "Tarjeta BBVA": así aparece en el corte y los reportes.</span></label>
+      </div>
+      <div class="tarjeta-pie"><button class="btn btn-primary" onclick="guardarAjustes()">Guardar cambios</button></div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="personas"></span></span><h2>Responsables</h2>
+        <button class="btn btn-ghost compacto" onclick="agregarCajero()">+ Agregar</button></div>
+      <div class="tarjeta-body"><div id="cfg-cajeros" class="conceptos"></div></div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="reloj"></span></span><h2>Turnos habituales</h2>
+        <button class="btn btn-ghost compacto" onclick="agregarTurno()">+ Agregar</button></div>
+      <div class="tarjeta-body">
+        <div id="cfg-turnos" class="conceptos"></div>
+        <p class="hint">Al abrir un turno el sistema propone el que corresponde a la hora actual.</p>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="bajar"></span></span><h2>Instalar como aplicación</h2></div>
+      <div class="tarjeta-body">
+        <div id="aj-instalar" class="aj-fotos">
+          <div id="aj-instalar-txt"></div>
+          <button id="btn-instalar" class="btn btn-primary" onclick="instalarApp()" style="display:none">
+            <span data-ico="bajar"></span> Instalar
+          </button>
+        </div>
+        <p class="hint">Instalada abre en su propia ventana, con su ícono, y <strong>funciona sin internet</strong>.
+          Los datos se quedan en el equipo donde la instales: cada dispositivo lleva los suyos.</p>
+
+        <div class="aj-fotos aj-version">
+          <div>
+            <strong>Versión <span id="aj-version">—</span></strong>
+            <span class="hint mono" id="aj-origen"></span>
+            <span class="hint">Si copiaste archivos nuevos y sigues viendo lo de antes,
+              el navegador está usando la copia guardada. Este botón la borra y la vuelve a leer.
+              <strong>Tus datos no se tocan.</strong></span>
+          </div>
+          <button class="btn btn-ghost" onclick="forzarActualizacion()">
+            <span data-ico="regresar"></span> Buscar versión nueva
+          </button>
+        </div>
+
+        <div class="aj-fotos aj-version" id="aj-remota-wrap" style="display:none">
+          <div>
+            <strong>Actualizaciones del programa</strong>
+            <span class="hint">Baja la versión más reciente publicada y reemplaza estos archivos.
+              <strong>Tus datos no se tocan.</strong></span>
+            <span class="hint" id="aj-remota-estado"></span>
+          </div>
+          <button id="btn-actualizar-remota" class="btn btn-primary" onclick="buscarActualizacionRemota()">
+            <span data-ico="bajar"></span> Buscar actualización
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="paquete"></span></span><h2>Fotos de productos</h2></div>
+      <div class="tarjeta-body">
+        <div class="aj-fotos">
+          <div>
+            <strong id="aj-fotos-conteo">Ningún producto tiene foto todavía</strong>
+            <span class="hint">Ocupan <strong id="aj-fotos-peso">0 B</strong> del espacio del navegador.
+              Se guardan dentro de la app, así que funcionan sin internet y viajan en el respaldo.</span>
+          </div>
+          <button id="aj-fotos-borrar" class="btn btn-ghost peligro-suave" onclick="borrarTodasLasFotos()" disabled>
+            <span data-ico="bote"></span> Quitar todas
+          </button>
+        </div>
+        <p class="hint">Para poner una, entra a <strong>Inventario</strong>, edita el producto y usa <em>Agregar foto</em>.</p>
+      </div>
+    </div>
+
+    <div class="tarjeta ancho-total">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="bajar"></span></span><h2>Respaldos</h2></div>
+      <div class="tarjeta-body">
+        <label class="check">
+          <input type="checkbox" id="cfg-respaldo-auto" onchange="guardarAjustes()"/>
+          <span>Guardar respaldo automático<em class="hint"> — en la carpeta elegida si hay una; si no,
+            se descarga una copia en cada corte</em></span>
+        </label>
+        <div id="respaldo-estado" class="respaldo-estado"></div>
+        <div class="acciones-pie">
+          <button class="btn btn-primary" onclick="Respaldo.elegirCarpeta()"><span data-ico="carpeta"></span> Elegir carpeta de respaldo</button>
+          <button class="btn btn-ghost" onclick="Respaldo.quitarCarpeta()">Quitar carpeta</button>
+          <button class="btn btn-ghost" onclick="exportarRespaldo()"><span data-ico="bajar"></span> Exportar respaldo ahora</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('import-respaldo').click()"><span data-ico="subir"></span> Importar respaldo</button>
+          <input type="file" id="import-respaldo" accept=".json,application/json" hidden onchange="importarRespaldo(event)"/>
+        </div>
+        <p id="cfg-uso" class="hint"></p>
+      </div>
+      <div class="tarjeta-pie zona-peligro">
+        <div><strong>Zona de riesgo</strong><span class="hint">Borra todo lo guardado en esta computadora.</span></div>
+        <button class="btn btn-danger" onclick="borrarTodo()">Borrar todos los datos</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═════════════════════════════════════════════════════ MODALES ══════ -->
+
+<!-- Cobro -->
+<div id="modal-cobro" class="modal-overlay" onclick="cerrarModal('modal-cobro', event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="cobro-titulo">Cobrar venta</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-cobro')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="cobro-abono-monto" class="campo" style="display:none">
+        <span class="campo-lbl">¿Cuánto abona el cliente?</span>
+        <input class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00" data-autofocus
+               oninput="fijarTotalAbono(this.value)"/>
+      </div>
+
+      <div class="cobro-total">
+        <span class="campo-lbl">Total a cobrar</span>
+        <strong id="cobro-total" class="cifra-enorme mono">$0.00</strong>
+      </div>
+
+      <span class="campo-lbl">Forma de pago <em>(un toque la cambia)</em></span>
+      <div id="cobro-metodos" class="metodos"></div>
+      <button type="button" id="cobro-mixto" class="mixto-sw" onclick="alternarMixto()"></button>
+      <div id="cobro-desglose" class="desglose" style="display:none"></div>
+
+      <div id="cobro-efectivo" class="cobro-efectivo">
+        <label class="campo">
+          <span class="campo-lbl">¿Con cuánto paga?</span>
+          <input id="cobro-recibido" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="fijarRecibido(this.value)"/>
+        </label>
+        <div class="billetes">
+          <button class="btn-billete" onclick="recibidoExacto()">Exacto</button>
+          <button class="btn-billete" onclick="sumarRecibido(20)">+$20</button>
+          <button class="btn-billete" onclick="sumarRecibido(50)">+$50</button>
+          <button class="btn-billete" onclick="sumarRecibido(100)">+$100</button>
+          <button class="btn-billete" onclick="sumarRecibido(200)">+$200</button>
+          <button class="btn-billete" onclick="sumarRecibido(500)">+$500</button>
+        </div>
+        <div class="cambio">
+          <span id="cobro-cambio-nota" class="campo-lbl">Cambio a entregar al cliente</span>
+          <strong id="cobro-cambio" class="cambio-val">—</strong>
+        </div>
+      </div>
+
+      <label id="cobro-cliente-wrap" class="campo" style="display:none">
+        <span class="campo-lbl" id="cobro-cliente-lbl">¿Quién se lleva fiado?</span>
+        <input class="input" list="dl-clientes" placeholder="Nombre del cliente" oninput="fijarCliente(this.value)"/>
+        <span id="cobro-deuda" class="cobro-deuda" style="display:none"></span>
+      </label>
+
+      <div id="cobro-aviso" class="cobro-aviso"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-cobro')">Cancelar</button>
+      <button id="btn-confirmar-cobro" class="btn btn-primary grande" onclick="confirmarCobro()"><span data-ico="palomita"></span> Confirmar cobro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Movimientos del turno -->
+<div id="modal-movimientos" class="modal-overlay" onclick="cerrarModal('modal-movimientos', event)">
+  <div class="modal">
+    <div class="modal-head"><h2>Movimientos de este turno</h2>
+      <button class="modal-x" onclick="cerrarMovimientos()" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <div id="pos-lista-ventas" class="lista-ventas"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarMovimientos()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Envío de dinero: tú transfieres, el cliente te paga en efectivo -->
+<div id="modal-envio" class="modal-overlay" onclick="cerrarModal('modal-envio', event)">
+  <div class="modal">
+    <div class="modal-head"><h2>Enviar dinero</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-envio')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <p class="hint">Tú haces la transferencia desde tu cuenta y el cliente te paga en efectivo
+        el monto más tu comisión.</p>
+
+      <span class="campo-lbl">¿Desde qué cuenta transfieres?</span>
+      <div id="envio-cuentas" class="metodos"></div>
+
+      <div class="campos">
+        <label class="campo"><span class="campo-lbl">¿Cuánto vas a transferir?</span>
+          <input id="envio-monto" class="input mono grande js-calc" inputmode="decimal" placeholder="0.00"
+                 data-autofocus oninput="fijarMontoEnvio(this.value)"/></label>
+        <label class="campo"><span class="campo-lbl">Tu comisión</span>
+          <input id="envio-comision" class="input mono grande js-calc" inputmode="decimal" placeholder="0.00"
+                 oninput="fijarComisionEnvio(this.value)"/></label>
+      </div>
+
+      <label class="campo ancho"><span class="campo-lbl">¿Para quién? <em>(opcional)</em></span>
+        <input id="envio-desc" class="input" list="dl-clientes" autocomplete="off"
+               placeholder="Nombre o referencia" oninput="fijarDescEnvio(this.value)"/></label>
+
+      <div class="envio-resumen">
+        <div class="er-fila principal">
+          <span>Cóbrale en efectivo</span><strong id="envio-cobrar" class="mono">$0.00</strong>
+        </div>
+        <div class="er-fila">
+          <span>Sale de <strong id="envio-cuenta-nombre">Mercado Pago</strong></span>
+          <span id="envio-sale" class="mono">$0.00</span>
+        </div>
+        <div class="er-fila ganancia">
+          <span>Tu ganancia</span><span id="envio-ganas" class="mono">$0.00</span>
+        </div>
+      </div>
+
+      <div id="envio-aviso" class="cobro-aviso"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-envio')">Cancelar</button>
+      <button id="btn-guardar-envio" class="btn btn-primary grande" onclick="registrarEnvio()">
+        <span data-ico="palomita"></span> Registrar envío</button>
+    </div>
+  </div>
+</div>
+
+<!-- Salida de efectivo desde el mostrador -->
+<div id="modal-egreso" class="modal-overlay" onclick="cerrarModal('modal-egreso', event)">
+  <div class="modal">
+    <div class="modal-head"><h2 id="egreso-titulo">Salida de dinero</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-egreso')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <div id="egreso-modos" class="chips">
+        <button class="chip activo" data-modo="salida" onclick="fijarModoEgreso('salida')">Sale de la tienda</button>
+        <button class="chip" data-modo="traspaso" onclick="fijarModoEgreso('traspaso')">Mover entre cuentas</button>
+      </div>
+
+      <div id="egreso-tipos-wrap">
+        <span class="campo-lbl">¿Qué tipo de pago fue?</span>
+        <div id="egreso-tipos" class="metodos"></div>
+      </div>
+
+      <span class="campo-lbl" id="egreso-origen-lbl">¿De dónde sale el dinero?</span>
+      <div id="egreso-origen" class="metodos"></div>
+
+      <div id="egreso-destino-wrap" style="display:none">
+        <span class="campo-lbl">¿A qué cuenta entra?</span>
+        <div id="egreso-destino" class="metodos"></div>
+      </div>
+
+      <label class="campo ancho"><span class="campo-lbl" id="egreso-desc-lbl">¿De qué fue?</span>
+        <input id="egreso-desc" class="input" data-autofocus autocomplete="off"
+               oninput="fijarDescEgreso(this.value)"/></label>
+
+      <label class="campo ancho"><span class="campo-lbl" id="egreso-monto-lbl">¿Cuánto salió?</span>
+        <input id="egreso-monto" class="input mono grande js-calc" inputmode="decimal" placeholder="0.00"
+               oninput="fijarMontoEgreso(this.value)"/></label>
+
+      <div id="egreso-aviso" class="cobro-aviso"></div>
+
+      <div class="egreso-previos">
+        <div class="egreso-previos-cab">
+          <div>
+            <span class="campo-lbl">Movimientos de este turno</span>
+            <span id="egreso-desglose" class="hint"></span>
+          </div>
+          <strong id="egreso-total-turno" class="mono">$0.00</strong>
+        </div>
+        <div id="egreso-lista" class="conceptos-lista"></div>
+      </div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-egreso')">Cerrar</button>
+      <button id="btn-guardar-egreso" class="btn btn-primary grande" onclick="guardarEgreso()">
+        <span data-ico="palomita"></span> <span id="btn-guardar-egreso-txt">Registrar salida</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Dar de alta un fiado que ya existía en la libreta -->
+<div id="modal-nuevo-fiado" class="modal-overlay" onclick="cerrarModal('modal-nuevo-fiado', event)">
+  <div class="modal">
+    <div class="modal-head"><h2>Agregar un fiado</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-nuevo-fiado')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <p class="hint">Para pasar a la app lo que ya traes anotado en la libreta.
+        No mueve dinero ni inventario: sólo abre la cuenta con lo que esa persona debe.</p>
+
+      <label class="campo ancho"><span class="campo-lbl">¿Quién debe?</span>
+        <input id="nf-nombre" class="input" list="dl-clientes" data-autofocus autocomplete="off"
+               placeholder="Nombre de la persona" oninput="validarAltaFiado()"/></label>
+
+      <label class="campo ancho"><span class="campo-lbl">¿Cuánto debe?</span>
+        <input id="nf-monto" class="input mono grande js-calc" inputmode="decimal" placeholder="0.00"
+               oninput="validarAltaFiado()"/></label>
+
+      <label class="campo ancho"><span class="campo-lbl">Nota <em>(opcional)</em></span>
+        <input id="nf-nota" class="input" autocomplete="off" placeholder="Ej. desde marzo, libreta vieja…"/></label>
+
+      <div id="nf-aviso" class="cobro-aviso"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-nuevo-fiado')">Cancelar</button>
+      <button id="btn-guardar-fiado" class="btn btn-primary grande" onclick="guardarAltaFiado()">
+        <span data-ico="palomita"></span> Guardar el fiado</button>
+    </div>
+  </div>
+</div>
+
+<!-- Estado de cuenta de una persona -->
+<div id="modal-cuenta" class="modal-overlay" onclick="cerrarModal('modal-cuenta', event)">
+  <div class="modal ancho">
+    <div class="modal-head"><h2>Estado de cuenta</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-cuenta')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body" id="cuenta-imprimible">
+      <div class="solo-imprimir cuenta-membrete">
+        <strong id="cuenta-negocio"></strong>
+        <span>Estado de cuenta · <span id="cuenta-impreso"></span></span>
+      </div>
+      <div class="cuenta-cab">
+        <div>
+          <strong id="cuenta-nombre" class="cuenta-nombre">—</strong>
+          <span id="cuenta-resumen" class="hint"></span>
+        </div>
+        <div class="cuenta-saldo">
+          <span class="campo-lbl">Debe</span>
+          <strong id="cuenta-saldo" class="cuenta-saldo-val mono">$0.00</strong>
+        </div>
+      </div>
+      <div id="cuenta-movs" class="tabla-scroll"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-cuenta')">Cerrar</button>
+      <button class="btn btn-ghost" onclick="exportarCuenta()"><span data-ico="bajar"></span> Exportar</button>
+      <button class="btn btn-ghost" onclick="imprimirCuenta()"><span data-ico="imprimir"></span> Imprimir</button>
+      <button id="btn-abonar-cuenta" class="btn btn-primary" onclick=""><span data-ico="billete"></span> Registrar abono</button>
+    </div>
+  </div>
+</div>
+
+<!-- Consultar cualquier ticket -->
+<div id="modal-consulta" class="modal-overlay" onclick="cerrarModal('modal-consulta', event)">
+  <div class="modal ancho">
+    <div class="modal-head"><h2>Consultar ticket</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-consulta')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <input id="cs-buscar" class="input buscador" data-autofocus
+             placeholder="Busca por folio, producto, cliente o fecha…" oninput="buscarConsulta(this.value)" data-sin-enter/>
+      <div id="cs-filtros" class="chips">
+        <button class="chip" data-tipo="todos"      onclick="filtrarConsulta('todos')">Todos</button>
+        <button class="chip" data-tipo="venta"      onclick="filtrarConsulta('venta')">Ventas</button>
+        <button class="chip" data-tipo="abono"      onclick="filtrarConsulta('abono')">Abonos</button>
+        <button class="chip" data-tipo="recarga"    onclick="filtrarConsulta('recarga')">Recargas</button>
+        <button class="chip" data-tipo="devolucion" onclick="filtrarConsulta('devolucion')">Devoluciones</button>
+      </div>
+      <p id="cs-conteo" class="hint"></p>
+      <div id="cs-lista" class="bv-lista"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-consulta')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Buscar la venta que se va a devolver -->
+<div id="modal-buscar-venta" class="modal-overlay" onclick="cerrarModal('modal-buscar-venta', event)">
+  <div class="modal">
+    <div class="modal-head"><h2>¿Qué venta se devuelve?</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-buscar-venta')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <input id="bv-buscar" class="input buscador" data-autofocus
+             placeholder="Busca por folio, producto o cliente…" oninput="renderBuscarVenta()" data-sin-enter/>
+      <p class="hint">Se muestran las ventas más recientes. Escribe el folio del ticket si lo tienes a la mano.</p>
+      <div id="bv-lista" class="bv-lista"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-buscar-venta')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Devolución -->
+<div id="modal-devolucion" class="modal-overlay" onclick="cerrarModal('modal-devolucion', event)">
+  <div class="modal">
+    <div class="modal-head"><h2>Devolución</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-devolucion')" aria-label="Cerrar"><span data-ico="cerrar"></span></button></div>
+    <div class="modal-body">
+      <div class="campo ancho">
+        <span class="campo-lbl">Venta que se devuelve</span>
+        <strong id="devol-folio"></strong>
+      </div>
+      <p class="hint explicativo">Marca cuántas piezas regresa el cliente. La venta original no se borra:
+        queda registrada la devolución y la mercancía vuelve al inventario.</p>
+      <div id="devol-lineas" class="devol-lista"></div>
+      <button class="btn btn-ghost compacto" onclick="todoDevolucion()">Devolver todo</button>
+      <span class="campo-lbl" style="display:block;margin-top:16px">¿Por dónde se regresa el dinero?</span>
+      <div id="devol-metodos" class="metodos"></div>
+      <div class="cambio">
+        <span class="campo-lbl">Total a devolver</span>
+        <strong id="devol-total" class="cambio-val malo">$0.00</strong>
+      </div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-devolucion')">Cancelar</button>
+      <button id="btn-confirmar-devol" class="btn btn-danger" onclick="confirmarDevolucion()">Confirmar devolución</button>
+    </div>
+  </div>
+</div>
+
+<!-- Venta libre -->
+<div id="modal-libre" class="modal-overlay" onclick="cerrarModal('modal-libre', event)">
+  <div class="modal angosto">
+    <div class="modal-head"><h2>Venta libre</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-libre')" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body campos">
+      <label class="campo ancho"><span class="campo-lbl">¿Qué vendes?</span>
+        <input id="libre-desc" class="input" list="dl-venta-libre" placeholder="Ej. Mercancía a granel" data-autofocus/></label>
+      <label class="campo"><span class="campo-lbl">Precio</span>
+        <input id="libre-precio" class="input-grande mono js-calc" inputmode="decimal" placeholder="0.00"/></label>
+      <label class="campo"><span class="campo-lbl">Cantidad</span>
+        <input id="libre-cantidad" class="input-grande mono js-calc" inputmode="decimal" value="1"/></label>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-libre')">Cancelar</button>
+      <button class="btn btn-primary" onclick="agregarLineaLibre()">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recarga -->
+<div id="modal-recarga" class="modal-overlay" onclick="cerrarModal('modal-recarga', event)">
+  <div class="modal angosto">
+    <div class="modal-head"><h2><span data-ico="telefono"></span> Registrar recarga</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-recarga')" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body campos">
+      <label class="campo ancho"><span class="campo-lbl">Monto de la recarga</span>
+        <input id="recarga-monto" class="input-grande mono js-calc" inputmode="decimal" placeholder="50.00" data-autofocus
+               oninput="actualizarPreviewRecarga()"/></label>
+      <label class="campo ancho"><span class="campo-lbl">Referencia <em>(opcional)</em></span>
+        <input id="recarga-desc" class="input" list="dl-recargas" placeholder="Ej. Telcel 55 1234 5678"/></label>
+      <div class="resumen-lineas ancho">
+        <div class="rl"><span>Entra en efectivo a tu caja</span><strong id="recarga-efectivo" class="mono bueno">$0.00</strong></div>
+        <div class="rl"><span>Comisión que te devuelve MP</span><strong id="recarga-comision" class="mono bueno">$0.00</strong></div>
+        <div class="rl total"><span>Sale neto de tu saldo MP</span><strong id="recarga-neto" class="mono malo">$0.00</strong></div>
+      </div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-recarga')">Cancelar</button>
+      <button class="btn btn-primary" onclick="registrarRecarga()">Registrar recarga</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ticket -->
+<div id="modal-ticket" class="modal-overlay" onclick="cerrarModal('modal-ticket', event)">
+  <div class="modal angosto">
+    <div class="modal-head no-imprimir"><h2>Comprobante</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-ticket')" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body" id="ticket-contenido"></div>
+    <div class="modal-pie no-imprimir">
+      <button class="btn btn-ghost" data-autofocus onclick="cerrarModal('modal-ticket')">Cerrar</button>
+      <button class="btn btn-primary" onclick="imprimirTicket()"><span data-ico="imprimir"></span> Imprimir ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Producto -->
+<div id="modal-producto" class="modal-overlay" onclick="cerrarModal('modal-producto', event)">
+  <div class="modal">
+    <div class="modal-head"><h2 id="producto-titulo">Nuevo producto</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-producto')" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body campos">
+      <div class="pr-foto ancho">
+        <div id="pr-foto-caja" class="pr-foto-caja"></div>
+        <div class="pr-foto-acciones">
+          <span class="campo-lbl">Foto <em>(opcional)</em></span>
+          <p class="hint">Ayuda sobre todo en lo que no tiene código de barras y se busca escribiendo.
+             Desde el celular puedes tomarla al momento.</p>
+          <div class="pr-foto-botones">
+            <label class="btn btn-ghost">
+              <span data-ico="paquete"></span> <span id="pr-foto-btn-txt">Agregar foto</span>
+              <input type="file" accept="image/*" hidden onchange="elegirFotoProducto(this)"/>
+            </label>
+            <button type="button" id="pr-foto-quitar" class="btn btn-ghost peligro-suave" style="display:none"
+                    onclick="quitarFotoProducto()"><span data-ico="bote"></span> Quitar</button>
+          </div>
+        </div>
+      </div>
+      <label class="campo ancho"><span class="campo-lbl">Nombre del producto</span>
+        <input id="pr-nombre" class="input" placeholder="Ej. Coca-Cola 600 ml" data-autofocus/></label>
+      <label class="campo"><span class="campo-lbl">Código de barras o clave <em>(opcional)</em></span>
+        <input id="pr-sku" class="input mono" placeholder="7501…"/></label>
+      <label class="campo"><span class="campo-lbl">Categoría</span>
+        <input id="pr-categoria" class="input" list="dl-categorias" placeholder="General"/></label>
+      <label class="campo"><span class="campo-lbl">Precio de venta</span>
+        <input id="pr-precio" class="input mono js-calc" inputmode="decimal" placeholder="0.00" oninput="actualizarMargenProducto()"/></label>
+      <label class="campo"><span class="campo-lbl">Costo <em>(opcional)</em></span>
+        <input id="pr-costo" class="input mono js-calc" inputmode="decimal" placeholder="0.00" oninput="actualizarMargenProducto()"/></label>
+      <p id="pr-margen" class="hint ancho"></p>
+      <label class="campo"><span class="campo-lbl">Existencia actual</span>
+        <input id="pr-stock" class="input mono js-calc" inputmode="decimal" placeholder="0"/></label>
+      <label class="campo"><span class="campo-lbl">Avisarme cuando queden menos de</span>
+        <input id="pr-stockmin" class="input mono js-calc" inputmode="decimal" placeholder="5"/></label>
+      <label class="check ancho">
+        <input type="checkbox" id="pr-controla" checked onchange="document.getElementById('pr-stock').disabled = !this.checked"/>
+        <span>Llevar control de existencias <em class="hint">(desactívalo para servicios o graneles)</em></span>
+      </label>
+      <label class="check ancho">
+        <input type="checkbox" id="pr-activo" checked/>
+        <span>Mostrar en el punto de venta</span>
+      </label>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-producto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProducto()">Guardar producto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Entrada de mercancía -->
+<div id="modal-entrada" class="modal-overlay" onclick="cerrarModal('modal-entrada', event)">
+  <div class="modal angosto">
+    <div class="modal-head"><h2>Movimiento de inventario</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-entrada')" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body campos">
+      <div class="campo ancho">
+        <span class="campo-lbl">Producto</span>
+        <strong id="entrada-producto"></strong>
+        <span class="hint">Existencia actual: <b id="entrada-actual">0</b></span>
+      </div>
+      <div class="campo ancho">
+        <span class="campo-lbl">Tipo de movimiento</span>
+        <div class="radios">
+          <label><input type="radio" name="entrada-tipo" value="entrada" checked onchange="actualizarPreviewEntrada()"/> Entrada de mercancía</label>
+          <label><input type="radio" name="entrada-tipo" value="salida" onchange="actualizarPreviewEntrada()"/> Salida (merma, uso propio)</label>
+          <label><input type="radio" name="entrada-tipo" value="ajuste" onchange="actualizarPreviewEntrada()"/> Ajuste: dejar la existencia en…</label>
+        </div>
+      </div>
+      <label class="campo"><span class="campo-lbl">Cantidad</span>
+        <input id="entrada-cantidad" class="input-grande mono js-calc" inputmode="decimal" placeholder="0" data-autofocus
+               oninput="actualizarPreviewEntrada()"/></label>
+      <label class="campo" id="entrada-costo-wrap"><span class="campo-lbl">Costo unitario de compra</span>
+        <input id="entrada-costo" class="input mono js-calc" inputmode="decimal" placeholder="0.00"/></label>
+      <div class="campo ancho">
+        <span class="campo-lbl">Quedará en</span>
+        <strong id="entrada-resultado" class="entrada-res">0</strong>
+      </div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-entrada')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEntrada()">Aplicar movimiento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Historial -->
+<div id="modal-historial" class="modal-overlay" onclick="cerrarModal('modal-historial', event)">
+  <div class="modal ancho-max">
+    <div class="modal-head">
+      <h2><span data-ico="grafica"></span> Historial y análisis</h2>
+      <button class="modal-x" onclick="cerrarModal('modal-historial')" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="modal-tab activo" data-htab="cortes" onclick="cambiarTabHistorial('cortes')"><span data-ico="carpeta"></span> Cortes</button>
+      <button class="modal-tab" data-htab="ventas" onclick="cambiarTabHistorial('ventas')"><span data-ico="recibo"></span> Ventas</button>
+      <button class="modal-tab" data-htab="conceptos" onclick="cambiarTabHistorial('conceptos')"><span data-ico="buscar"></span> Buscar conceptos</button>
+      <button class="modal-tab" data-htab="analisis" onclick="cambiarTabHistorial('analisis')"><span data-ico="subir"></span> Análisis</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Cortes -->
+      <div id="htab-cortes" class="htab-panel activo">
+        <div class="filtros">
+          <input id="hc-buscar" class="input" placeholder="Buscar por responsable, turno u observación…" oninput="renderCortes()"/>
+          <input id="hc-desde" type="date" class="input" onchange="renderCortes()" aria-label="Desde"/>
+          <input id="hc-hasta" type="date" class="input" onchange="renderCortes()" aria-label="Hasta"/>
+          <select id="hc-estado" class="input" onchange="renderCortes()" aria-label="Estado">
+            <option value="">Todos</option>
+            <option value="ok">Sólo los que cuadraron</option>
+            <option value="difiere">Sólo con diferencias</option>
+          </select>
+        </div>
+        <p id="hc-resumen" class="hint"></p>
+        <div id="hist-cortes-lista" class="lista-cortes"></div>
+        <div class="acciones-pie">
+          <button class="btn btn-ghost" onclick="exportarRespaldo()"><span data-ico="bajar"></span> Exportar respaldo</button>
+          <button class="btn btn-danger" onclick="borrarTodoHistorial()"><span data-ico="bote"></span> Borrar historial de cortes</button>
+        </div>
+      </div>
+
+      <!-- Ventas -->
+      <div id="htab-ventas" class="htab-panel">
+        <div class="filtros">
+          <input id="hv-buscar" class="input" placeholder="Buscar folio, producto o cliente…" oninput="renderHistorialVentas()"/>
+          <input id="hv-desde" type="date" class="input" onchange="renderHistorialVentas()" aria-label="Desde"/>
+          <input id="hv-hasta" type="date" class="input" onchange="renderHistorialVentas()" aria-label="Hasta"/>
+          <select id="hv-tipo" class="input" onchange="renderHistorialVentas()" aria-label="Tipo">
+            <option value="">Todos los movimientos</option>
+            <option value="venta">Sólo ventas</option>
+            <option value="recarga">Sólo recargas</option>
+            <option value="abono">Sólo abonos</option>
+          </select>
+        </div>
+        <p id="hv-resumen" class="hint"></p>
+        <div id="hist-ventas-lista" class="tabla-scroll"></div>
+        <div class="acciones-pie">
+          <button class="btn btn-ghost" onclick="exportarVentasCSV()"><span data-ico="subir"></span> Exportar ventas en CSV</button>
+        </div>
+      </div>
+
+      <!-- Buscador de conceptos -->
+      <div id="htab-conceptos" class="htab-panel">
+        <div class="filtros">
+          <input id="bc-texto" class="input" placeholder="Ej. coca, luz, renta…" oninput="buscarConceptos()"/>
+          <select id="bc-categoria" class="input" onchange="buscarConceptos()" aria-label="Categoría">
+            <option value="todas">Todas las categorías</option>
+            <option value="proveedores">Proveedores</option>
+            <option value="servicios">Servicios</option>
+            <option value="honorarios">Honorarios</option>
+            <option value="otrosEgresos">Otras salidas</option>
+            <option value="otrosIngresosList">Otros ingresos</option>
+          </select>
+          <input id="bc-desde" type="date" class="input" onchange="buscarConceptos()" aria-label="Desde"/>
+          <input id="bc-hasta" type="date" class="input" onchange="buscarConceptos()" aria-label="Hasta"/>
+        </div>
+        <div class="bc-resumen">
+          <div class="kpi"><span>Total encontrado</span><strong id="bc-total" class="mono">$0.00</strong>
+            <span id="bc-neto" class="hint"></span></div>
+          <div class="kpi"><span>Registros</span><strong id="bc-count">0</strong></div>
+        </div>
+        <div id="bc-resultados" class="tabla-scroll"></div>
+      </div>
+
+      <!-- Análisis -->
+      <div id="htab-analisis" class="htab-panel">
+        <div class="filtros">
+          <select id="an-rango" class="input" onchange="renderAnalisis()" aria-label="Periodo">
+            <option value="7">Últimos 7 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 3 meses</option>
+            <option value="365">Último año</option>
+            <option value="3650">Todo el historial</option>
+          </select>
+        </div>
+        <div class="an-kpis">
+          <div class="kpi"><span>Venta del periodo</span><strong id="an-venta" class="mono bueno">$0.00</strong></div>
+          <div class="kpi"><span>Egresos</span><strong id="an-egresos" class="mono malo">$0.00</strong></div>
+          <div class="kpi"><span>Diferencia venta − egresos</span><strong id="an-neto" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Promedio por día</span><strong id="an-prom-dia" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Ticket promedio</span><strong id="an-ticket" class="mono">$0.00</strong></div>
+          <div class="kpi"><span>Cortes</span><strong id="an-cortes">0</strong></div>
+          <div class="kpi"><span>Diferencia acumulada en caja</span><strong id="an-dif" class="mono">$0.00</strong></div>
+        </div>
+
+        <div class="rejilla-graficas">
+          <div class="tarjeta"><div class="tarjeta-head"><h2>Venta por día</h2></div>
+            <div class="tarjeta-body" id="an-chart-dias"></div></div>
+          <div class="tarjeta"><div class="tarjeta-head"><h2>Cómo te pagan</h2></div>
+            <div class="tarjeta-body" id="an-chart-metodos"></div></div>
+          <div class="tarjeta"><div class="tarjeta-head"><h2>En qué se va el efectivo</h2></div>
+            <div class="tarjeta-body" id="an-chart-egresos"></div></div>
+          <div class="tarjeta"><div class="tarjeta-head"><h2>Venta por turno</h2></div>
+            <div class="tarjeta-body" id="an-chart-turnos"></div></div>
+          <div class="tarjeta ancho-total"><div class="tarjeta-head"><h2>Lo que más vendes</h2></div>
+            <div class="tarjeta-body tabla-scroll" id="an-top-productos"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmación genérica -->
+<div id="confirm-modal" class="modal-overlay">
+  <div class="modal angosto" id="confirm-modal-box">
+    <div class="modal-head"><h2 id="confirm-titulo">¿Confirmas?</h2></div>
+    <div class="modal-body"><div id="confirm-mensaje"></div></div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" id="confirm-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="confirm-ok">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Listas de sugerencias -->
+<datalist id="dl-cajeros"></datalist>
+<datalist id="dl-horarios"></datalist>
+<datalist id="dl-categorias"></datalist>
+<datalist id="dl-clientes" data-sugerencias="clientes"></datalist>
+<datalist id="dl-recargas" data-sugerencias="recargas"></datalist>
+<datalist id="dl-venta-libre" data-sugerencias="venta-libre"></datalist>
+<datalist id="dl-proveedores" data-sugerencias="proveedores"></datalist>
+<datalist id="dl-servicios" data-sugerencias="servicios"></datalist>
+<datalist id="dl-honorarios" data-sugerencias="honorarios"></datalist>
+<datalist id="dl-otros-retiros" data-sugerencias="otros-retiros"></datalist>
+<datalist id="dl-otros-ingresos" data-sugerencias="otros-ingresos"></datalist>
+
+<div id="toast-container" class="toasts no-imprimir"></div>
+
+<script src="js/core.js?v=26"></script>
+<script src="js/iconos.js?v=26"></script>
+<script src="js/turno.js?v=26"></script>
+<script src="js/pos.js?v=26"></script>
+<script src="js/inventario.js?v=26"></script>
+<script src="js/corte.js?v=26"></script>
+<script src="js/historial.js?v=26"></script>
+<script src="js/reportes.js?v=26"></script>
+<script src="js/fotos.js?v=26"></script>
+<script src="js/fiados.js?v=26"></script>
+<script src="js/app.js?v=26"></script>
+</body>
+</html>
