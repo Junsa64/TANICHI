@@ -340,7 +340,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '27';
+const VERSION_APP = '28';
 
 /**
  * Se cura sola cuando quedó una copia vieja guardada.
