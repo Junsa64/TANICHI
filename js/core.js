@@ -70,6 +70,9 @@ const CONFIG_DEFAULT = {
   tarjetaCreditoAlias: '',     // ej. "Tarjeta BBVA": si se deja vacío usa "Tarjeta de crédito"
   tarjetaCreditoDiaCorte: null, // día del mes (1-31) en que el banco cierra el periodo
   tarjetaCreditoDiaPago: null,  // día del mes (1-31) en que vence el pago
+  tarjetaCreditoMonitoreo: true, // llevar el control de cuánto debes; si se apaga,
+                                 // se puede seguir comprando con ella pero sin pedir
+                                 // saldos ni compararlos en el corte
   permitirSinStock: true,      // vender aunque el sistema marque 0 (sólo avisa)
   ticketPie: '¡Gracias por su compra!',
   tema: 'claro',

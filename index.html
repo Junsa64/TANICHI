@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="29"/>
+<meta name="tanichi-version" content="30"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=29"/>
+<link rel="stylesheet" href="style.css?v=30"/>
 </head>
 <body>
 
@@ -463,6 +463,15 @@
   <div id="panel-egresos" class="panel-corte">
     <div class="rejilla-2">
       <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="canasta"></span></span><h2>Compras</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('compras')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-compras" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-compras" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
         <div class="tarjeta-head"><span class="ico"><span data-ico="camion"></span></span><h2>Pago a proveedores</h2>
           <button class="btn btn-ghost compacto" onclick="agregarConcepto('proveedores')">+ Agregar</button></div>
         <div class="tarjeta-body">
@@ -486,6 +495,15 @@
         <div class="tarjeta-body">
           <div id="lista-honorarios" class="conceptos"></div>
           <div class="linea-total"><span>Subtotal</span><strong id="total-honorarios" class="mono malo">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="tarjeta-head"><span class="ico"><span data-ico="moneda"></span></span><h2>Gastos</h2>
+          <button class="btn btn-ghost compacto" onclick="agregarConcepto('gastos')">+ Agregar</button></div>
+        <div class="tarjeta-body">
+          <div id="lista-gastos" class="conceptos"></div>
+          <div class="linea-total"><span>Subtotal</span><strong id="total-gastos" class="mono malo">$0.00</strong></div>
         </div>
       </div>
 
@@ -766,6 +784,12 @@
         <label class="campo ancho"><span class="campo-lbl">Nombre <em>(opcional)</em></span>
           <input id="cfg-tc-alias" class="input" placeholder="Tarjeta de crédito" maxlength="40"/>
           <span class="hint">Por ejemplo "Tarjeta BBVA": así aparece en el corte y los reportes.</span></label>
+        <label class="check ancho">
+          <input type="checkbox" id="cfg-tc-monitoreo" onchange="guardarAjustes()"/>
+          <span>Llevar el control de cuánto debes<em class="hint"> — pide el saldo al abrir y cerrar turno
+            y lo compara en el corte. Si la apagas, sigues pudiendo comprar con la tarjeta desde Egreso
+            —y ver cuánto compraste con ella— pero sin pedirte ni cuadrar el saldo.</em></span>
+        </label>
         <label class="campo"><span class="campo-lbl">Día de corte</span>
           <input id="cfg-tc-corte" class="input mono js-calc" inputmode="numeric" placeholder="Ej. 15" maxlength="2"/>
           <span class="hint">El día del mes en que tu banco cierra el periodo.</span></label>
@@ -1390,9 +1414,11 @@
           <input id="bc-texto" class="input" placeholder="Ej. coca, luz, renta…" oninput="buscarConceptos()"/>
           <select id="bc-categoria" class="input" onchange="buscarConceptos()" aria-label="Categoría">
             <option value="todas">Todas las categorías</option>
+            <option value="compras">Compras</option>
             <option value="proveedores">Proveedores</option>
             <option value="servicios">Servicios</option>
             <option value="honorarios">Honorarios</option>
+            <option value="gastos">Gastos</option>
             <option value="otrosEgresos">Otras salidas</option>
             <option value="otrosIngresosList">Otros ingresos</option>
           </select>
@@ -1464,24 +1490,26 @@
 <datalist id="dl-clientes" data-sugerencias="clientes"></datalist>
 <datalist id="dl-recargas" data-sugerencias="recargas"></datalist>
 <datalist id="dl-venta-libre" data-sugerencias="venta-libre"></datalist>
+<datalist id="dl-compras" data-sugerencias="compras"></datalist>
 <datalist id="dl-proveedores" data-sugerencias="proveedores"></datalist>
 <datalist id="dl-servicios" data-sugerencias="servicios"></datalist>
 <datalist id="dl-honorarios" data-sugerencias="honorarios"></datalist>
+<datalist id="dl-gastos" data-sugerencias="gastos"></datalist>
 <datalist id="dl-otros-retiros" data-sugerencias="otros-retiros"></datalist>
 <datalist id="dl-otros-ingresos" data-sugerencias="otros-ingresos"></datalist>
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=29"></script>
-<script src="js/iconos.js?v=29"></script>
-<script src="js/turno.js?v=29"></script>
-<script src="js/pos.js?v=29"></script>
-<script src="js/inventario.js?v=29"></script>
-<script src="js/corte.js?v=29"></script>
-<script src="js/historial.js?v=29"></script>
-<script src="js/reportes.js?v=29"></script>
-<script src="js/fotos.js?v=29"></script>
-<script src="js/fiados.js?v=29"></script>
-<script src="js/app.js?v=29"></script>
+<script src="js/core.js?v=30"></script>
+<script src="js/iconos.js?v=30"></script>
+<script src="js/turno.js?v=30"></script>
+<script src="js/pos.js?v=30"></script>
+<script src="js/inventario.js?v=30"></script>
+<script src="js/corte.js?v=30"></script>
+<script src="js/historial.js?v=30"></script>
+<script src="js/reportes.js?v=30"></script>
+<script src="js/fotos.js?v=30"></script>
+<script src="js/fiados.js?v=30"></script>
+<script src="js/app.js?v=30"></script>
 </body>
 </html>

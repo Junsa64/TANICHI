@@ -225,9 +225,11 @@ function renderProductos() {
    ====================================================================== */
 
 const TIPOS_EGRESO = [
+  { clave: 'compras',      label: 'Compra',     ico: 'canasta', sug: 'compras',       ayuda: 'Mercancía para vender, insumos…' },
   { clave: 'proveedores',  label: 'Proveedor', ico: 'camion',  sug: 'proveedores',   ayuda: 'Coca-Cola, Sabritas, Bimbo…' },
   { clave: 'servicios',    label: 'Servicio',  ico: 'recibo',  sug: 'servicios',     ayuda: 'Luz, agua, internet, gas…' },
   { clave: 'honorarios',   label: 'Sueldo',    ico: 'persona', sug: 'honorarios',    ayuda: 'Pagos a personas.' },
+  { clave: 'gastos',       label: 'Gasto',     ico: 'moneda',  sug: 'gastos',        ayuda: 'Papelería, mantenimiento, imprevistos…' },
   { clave: 'otrosEgresos', label: 'Otro',      ico: 'subir',   sug: 'otros-retiros', ayuda: 'Cualquier otra salida de la caja.' },
 ];
 
@@ -235,7 +237,7 @@ let EGRESO = null;   // { modo, tipo, origen, destino, desc, monto }
 
 function abrirEgreso(modo = 'salida') {
   if (!exigirTurnoAbierto()) return;
-  EGRESO = { modo, tipo: 'proveedores', origen: 'caja', destino: 'cartera', desc: '', monto: 0 };
+  EGRESO = { modo, tipo: 'compras', origen: 'caja', destino: 'cartera', desc: '', monto: 0 };
   renderEgreso();
   abrirModal('modal-egreso');
 }

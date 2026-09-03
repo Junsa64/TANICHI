@@ -113,7 +113,7 @@ function turnoVacio() {
     posOriginal: null,
 
     // Salidas de efectivo
-    proveedores: [], servicios: [], honorarios: [], otrosEgresos: [],
+    compras: [], proveedores: [], servicios: [], honorarios: [], gastos: [], otrosEgresos: [],
 
     dotacion: 0,                         // heredado: efectivo de caja a cartera
     traspasos: [],                       // [{ id, origen, destino, monto, desc, hora }]
@@ -133,7 +133,7 @@ function cargarTurno() {
   const guardado = Store.get(DB.turno, null);
   TURNO = guardado ? { ...turnoVacio(), ...guardado } : turnoVacio();
   // Blindaje: si algún arreglo llegó corrupto, se restaura vacío en vez de romper
-  ['otrosIngresos', 'proveedores', 'servicios', 'honorarios', 'otrosEgresos',
+  ['otrosIngresos', 'compras', 'proveedores', 'servicios', 'honorarios', 'gastos', 'otrosEgresos',
    'ticketsPendientes', 'tickets'].forEach(k => {
     if (!Array.isArray(TURNO[k])) TURNO[k] = [];
   });
@@ -287,8 +287,9 @@ function sumaLista(lista) {
 }
 
 function totalEgresos() {
-  return redondear(sumaLista(TURNO.proveedores) + sumaLista(TURNO.servicios) +
-                   sumaLista(TURNO.honorarios) + sumaLista(TURNO.otrosEgresos));
+  return redondear(sumaLista(TURNO.compras) + sumaLista(TURNO.proveedores) +
+                   sumaLista(TURNO.servicios) + sumaLista(TURNO.honorarios) +
+                   sumaLista(TURNO.gastos) + sumaLista(TURNO.otrosEgresos));
 }
 
 /* ================================================ LAS TRES CUENTAS =======
@@ -354,7 +355,7 @@ function renderProximasFechasTC(elId) {
   el.innerHTML = partes.join(' · ');
 }
 
-const LISTAS_DE_EGRESO = ['proveedores', 'servicios', 'honorarios', 'otrosEgresos'];
+const LISTAS_DE_EGRESO = ['compras', 'proveedores', 'servicios', 'honorarios', 'gastos', 'otrosEgresos'];
 
 /** Cuenta de la que sale un egreso. Lo capturado antes no la traía: era caja. */
 function cuentaDeEgreso(item) {
@@ -449,7 +450,7 @@ function calcularCuadre(fuente = null) {
   const esperadoTC    = redondear(tcInicial + comprasTC - tras.tc);
   const contadoTC     = redondear(num(c.tcCierre));
   const difTC         = redondear(contadoTC - esperadoTC);
-  const mostrarTC     = true;
+  const mostrarTC     = CONFIG.tarjetaCreditoMonitoreo !== false;
 
   /* Renglones de traspaso, sólo los que mueven la cuenta que se está viendo */
   const renglonesTraspaso = (cuenta) => (c.traspasos || [])
@@ -638,9 +639,11 @@ function snapshotTurno() {
     envioPorCuenta: pos.envioPorCuenta || { mp: 0, cartera: 0, caja: 0 },
 
     /* egresos */
+    compras:     structuredClone(TURNO.compras),
     proveedores: structuredClone(TURNO.proveedores),
     servicios:   structuredClone(TURNO.servicios),
     honorarios:  structuredClone(TURNO.honorarios),
+    gastos:      structuredClone(TURNO.gastos),
     otrosEgresos: structuredClone(TURNO.otrosEgresos),
     egresos: totalEgresos(),
     egresosPorCuenta: egresosPorCuenta(),
@@ -892,9 +895,11 @@ async function editarCorte(id) {
     modoEdicion: true,
     posOriginal: corte.pos || null,
     otrosIngresos: structuredClone(corte.otrosIngresosList || corte.otrosList || []),
+    compras:       structuredClone(corte.compras || []),
     proveedores:   structuredClone(corte.proveedores   || corte.proveedoresList   || []),
     servicios:     structuredClone(corte.servicios     || corte.serviciosList     || []),
     honorarios:    structuredClone(corte.honorarios    || corte.honorariosList    || []),
+    gastos:        structuredClone(corte.gastos || []),
     otrosEgresos:  structuredClone(corte.otrosEgresos  || corte.otrosRetirosList  || []),
     obs: corte.obs || '',
     editandoCorteId: corte.id,

@@ -25,6 +25,7 @@ function renderApertura() {
   setVal('ap-notas', TURNO.notas || '');
   setVal('ap-mp-inicial', TURNO.mpInicial || '');
   setVal('ap-cartera-inicial', TURNO.carteraInicial || '');
+  show('ap-tc-wrap', CONFIG.tarjetaCreditoMonitoreo !== false, 'flex');
   setText('ap-tc-lbl', `Debías en ${CUENTAS.tc.largo.toLowerCase()} al abrir`);
   setVal('ap-tc-inicial', TURNO.tcInicial || '');
 
@@ -410,9 +411,11 @@ function renderRecargasCorte() {
 
 /* -------------------------------------------------------- panel: egresos */
 const LISTAS_EGRESO = [
+  { clave: 'compras',     titulo: 'Compras',            ico: 'canasta', sug: 'compras',     ayuda: 'Mercancía para vender, insumos…' },
   { clave: 'proveedores', titulo: 'Pago a proveedores', ico: 'camion', sug: 'proveedores', ayuda: 'Coca-Cola, Sabritas, Bimbo…' },
   { clave: 'servicios',   titulo: 'Servicios',          ico: 'recibo', sug: 'servicios',   ayuda: 'Luz, agua, internet, gas…' },
   { clave: 'honorarios',  titulo: 'Honorarios y sueldos', ico: 'persona', sug: 'honorarios', ayuda: 'Pagos a personas.' },
+  { clave: 'gastos',      titulo: 'Gastos',              ico: 'moneda', sug: 'gastos',       ayuda: 'Papelería, mantenimiento, imprevistos…' },
   { clave: 'otrosEgresos', titulo: 'Otras salidas de efectivo', ico: 'subir', sug: 'otros-retiros', ayuda: 'Cualquier otro retiro de la caja.' },
 ];
 
@@ -534,10 +537,14 @@ function renderPanelSaldos() {
   show('sal-dotacion-wrap', num(TURNO.dotacion) > 0, 'flex');
   renderTraspasosCorte();
 
-  setText('sal-tc-titulo', CUENTAS.tc.largo);
-  setVal('sal-tc-inicial', TURNO.tcInicial || '');
-  setVal('sal-tc-cierre', TURNO.tcCierre || '');
-  renderProximasFechasTC('sal-tc-proximas');
+  const monitoreoTC = CONFIG.tarjetaCreditoMonitoreo !== false;
+  show('sal-tc-tarjeta', monitoreoTC, 'block');
+  if (monitoreoTC) {
+    setText('sal-tc-titulo', CUENTAS.tc.largo);
+    setVal('sal-tc-inicial', TURNO.tcInicial || '');
+    setVal('sal-tc-cierre', TURNO.tcCierre || '');
+    renderProximasFechasTC('sal-tc-proximas');
+  }
 
   const c = calcularCuadre();
   setText('sal-mp-esperado', fmt(c.esperadoMp));
@@ -546,9 +553,11 @@ function renderPanelSaldos() {
   setText('sal-cartera-dif', fmtDiff(c.difCart));
   document.getElementById('sal-mp-dif')?.classList.toggle('malo', !igualDinero(c.difMp, 0));
   document.getElementById('sal-cartera-dif')?.classList.toggle('malo', !igualDinero(c.difCart, 0));
-  setText('sal-tc-esperado', fmt(c.esperadoTC));
-  setText('sal-tc-dif', fmtDiff(c.difTC));
-  document.getElementById('sal-tc-dif')?.classList.toggle('malo', !igualDinero(c.difTC, 0));
+  if (monitoreoTC) {
+    setText('sal-tc-esperado', fmt(c.esperadoTC));
+    setText('sal-tc-dif', fmtDiff(c.difTC));
+    document.getElementById('sal-tc-dif')?.classList.toggle('malo', !igualDinero(c.difTC, 0));
+  }
 }
 
 function onSaldo(clave, valor) {
@@ -691,8 +700,8 @@ function pintarReporte(c, preliminar = false) {
       }).join('');
 
   const listaEgresos = [
-    ['Proveedores', c.proveedores], ['Servicios', c.servicios],
-    ['Honorarios', c.honorarios], ['Otras salidas', c.otrosEgresos],
+    ['Compras', c.compras], ['Proveedores', c.proveedores], ['Servicios', c.servicios],
+    ['Honorarios', c.honorarios], ['Gastos', c.gastos], ['Otras salidas', c.otrosEgresos],
   ].flatMap(([titulo, lista]) => (lista || []).filter(x => num(x.monto) > 0).map(x =>
     `<tr><td>${titulo}: ${esc(x.desc || 'Sin concepto')}</td><td class="der mono malo">−${fmt(x.monto)}</td></tr>`));
 
@@ -881,7 +890,7 @@ async function exportarCorteTXT() {
   L.push('  3. EGRESOS');
   L.push(sep);
   let hubo = false;
-  [['Proveedor', c.proveedores], ['Servicio', c.servicios], ['Honorario', c.honorarios], ['Otro', c.otrosEgresos]]
+  [['Compra', c.compras], ['Proveedor', c.proveedores], ['Servicio', c.servicios], ['Honorario', c.honorarios], ['Gasto', c.gastos], ['Otro', c.otrosEgresos]]
     .forEach(([et, lista]) => (lista || []).filter(x => num(x.monto) > 0).forEach(x => {
       hubo = true; L.push(linea(`${et}: ${x.desc || 'sin concepto'}`, '-' + fmt(x.monto)));
     }));

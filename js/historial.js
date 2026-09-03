@@ -204,9 +204,11 @@ function buscarConceptos() {
   const hasta = document.getElementById('bc-hasta')?.value || '';
 
   const mapa = {
+    compras:       { titulo: 'Compra',      signo: -1 },
     proveedores:   { titulo: 'Proveedor',   signo: -1 },
     servicios:     { titulo: 'Servicio',    signo: -1 },
     honorarios:    { titulo: 'Honorario',   signo: -1 },
+    gastos:        { titulo: 'Gasto',       signo: -1 },
     otrosEgresos:  { titulo: 'Otra salida', signo: -1 },
     otrosIngresosList: { titulo: 'Otro ingreso', signo: +1 },
   };
@@ -323,11 +325,13 @@ function renderAnalisis() {
     : `<p class="hint">Aún no hay ventas con productos en este periodo.</p>`);
 
   /* ---- egresos por categoría */
-  const cats = { Proveedores: 0, Servicios: 0, Honorarios: 0, Otros: 0 };
+  const cats = { Compras: 0, Proveedores: 0, Servicios: 0, Honorarios: 0, Gastos: 0, Otros: 0 };
   cortes.forEach(c => {
+    cats.Compras     += sumaLista(c.compras);
     cats.Proveedores += sumaLista(c.proveedores || c.proveedoresList);
     cats.Servicios   += sumaLista(c.servicios   || c.serviciosList);
     cats.Honorarios  += sumaLista(c.honorarios  || c.honorariosList);
+    cats.Gastos      += sumaLista(c.gastos);
     cats.Otros       += sumaLista(c.otrosEgresos || c.otrosRetirosList);
   });
   setHTML('an-chart-egresos', graficaDona(

@@ -106,6 +106,7 @@ function renderAjustes() {
   setVal('cfg-rec-monto', CONFIG.recargaMonto);
   setVal('cfg-com-envio', CONFIG.comisionEnvio);
   setVal('cfg-tc-alias', CONFIG.tarjetaCreditoAlias);
+  document.getElementById('cfg-tc-monitoreo').checked = CONFIG.tarjetaCreditoMonitoreo !== false;
   setVal('cfg-tc-corte', CONFIG.tarjetaCreditoDiaCorte || '');
   setVal('cfg-tc-pago', CONFIG.tarjetaCreditoDiaPago || '');
   renderProximasFechasTC('cfg-tc-proximas');
@@ -159,6 +160,7 @@ function guardarAjustes() {
     recargaMonto: Math.max(0, valOf('cfg-rec-monto', 2)),
     comisionEnvio: Math.max(0, valOf('cfg-com-envio', 15)),
     tarjetaCreditoAlias: (document.getElementById('cfg-tc-alias')?.value || '').trim(),
+    tarjetaCreditoMonitoreo: !!document.getElementById('cfg-tc-monitoreo')?.checked,
     tarjetaCreditoDiaCorte: clamp(Math.round(valOf('cfg-tc-corte', 0)), 0, 31) || null,
     tarjetaCreditoDiaPago: clamp(Math.round(valOf('cfg-tc-pago', 0)), 0, 31) || null,
     stockMinDefault: Math.max(0, valOf('cfg-stockmin', 5)),
@@ -344,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '29';
+const VERSION_APP = '30';
 
 /**
  * Se cura sola cuando quedó una copia vieja guardada.
