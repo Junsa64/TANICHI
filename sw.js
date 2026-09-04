@@ -8,7 +8,7 @@
    almacenamiento del navegador. Esto sólo guarda el programa.
    ========================================================================== */
 
-const CACHE = 'tanichi-v30';
+const CACHE = 'tanichi-v31';
 
 /* Todo lo que hace falta para arrancar a oscuras. */
 const ARCHIVOS = [

@@ -297,8 +297,9 @@ function iniciarAtajos() {
    (Minimizar la ventana en sí lo hace Windows, con su botón del título:
    una página web no puede minimizarse sola.) */
 /* ---------------------------------------------------- pantalla completa ---
-   El botón de la esquina. Aprovecha toda la pantalla del mostrador y de paso
-   achica la barra de arriba, que es lo que se busca al ponerla completa. */
+   El botón de la esquina. Sólo aprovecha toda la pantalla del mostrador: la
+   barra de arriba se queda con su tamaño de siempre. El modo compacto es
+   aparte y se activa con F8, sin depender de si hay pantalla completa. */
 async function alternarPantallaCompleta() {
   try {
     if (!document.fullscreenElement) {
@@ -313,8 +314,6 @@ async function alternarPantallaCompleta() {
 
 /** El navegador avisa cuando entra o sale, incluso si fue con F11. */
 document.addEventListener('fullscreenchange', () => {
-  const completa = !!document.fullscreenElement;
-  alternarCompacta(completa);
   pintarBotonPantalla();
 });
 
@@ -346,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '30';
+const VERSION_APP = '31';
 
 /**
  * Se cura sola cuando quedó una copia vieja guardada.
