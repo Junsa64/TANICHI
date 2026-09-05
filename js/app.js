@@ -345,13 +345,18 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '32';
+const VERSION_APP = '33';
 
 /* ------------------------------------------------------------ novedades ---
-   Qué trae cada versión, para avisar apenas se instala (no en Ajustes: ahí
-   ya no sorprende a nadie). Sólo la versión actual necesita su lista; las
-   de versiones viejas ya se mostraron y se pueden dejar de lado. */
+   Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
+   ahí ya no sorprende a nadie) y además queda disponible en todo momento
+   con el botón "Novedades" de la barra de arriba. Se conservan las de
+   versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '33': [
+    'Nuevo botón "Novedades" en la barra de arriba: aquí se puede ver, cuando quieras, qué cambió en cada actualización.',
+    'Se corrige que "Corregir turno" no apareciera en el reporte de un corte mientras hubiera otro turno abierto.',
+  ],
   '32': [
     'Nuevo botón "Corregir turno" en el reporte del corte, para arreglarlo sin ir al historial.',
     'Al escribir importes o cantidades, la coma "," también funciona como punto decimal.',
@@ -374,6 +379,20 @@ function mostrarNovedadesSiHayActualizacion() {
   }
   ui.versionVista = VERSION_APP;
   Store.set(DB.ui, ui);
+}
+
+/** El historial completo de novedades, para verlo cuando se quiera. */
+function abrirNovedades() {
+  const cont = document.getElementById('novedades-lista');
+  if (cont) {
+    const versiones = Object.keys(NOVEDADES).sort((a, b) => Number(b) - Number(a));
+    cont.innerHTML = versiones.map(v => `
+      <div class="novedad-version">
+        <h3>Versión ${v}</h3>
+        <ul class="lista-dif">${NOVEDADES[v].map(n => `<li>${esc(n)}</li>`).join('')}</ul>
+      </div>`).join('');
+  }
+  abrirModal('modal-novedades');
 }
 
 /**

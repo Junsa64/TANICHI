@@ -882,6 +882,12 @@ select.input { cursor: pointer; }
 .cuadre-pistas ul { margin: 8px 0 0 18px; color: var(--gris); display: flex; flex-direction: column; gap: 4px; }
 .lista-dif { margin: 10px 0 10px 18px; }
 
+/* --------------------------------------------------------- novedades */
+.novedad-version { padding: 14px 0; border-bottom: var(--borde); }
+.novedad-version:last-child { border-bottom: 0; }
+.novedad-version h3 { font-size: 14px; font-weight: 900; }
+.novedad-version .lista-dif { margin-bottom: 0; }
+
 /* ---------------------------------------------------------- reporte */
 .reporte { background: var(--papel); border: var(--borde); }
 .aviso-preliminar { padding: 12px 24px; background: var(--turquesa); color: #fdfbf6; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
