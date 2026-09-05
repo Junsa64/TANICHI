@@ -272,6 +272,7 @@ function repCortes() {
     .map(c => {
       const cu = calcularCuadre(c);
       return {
+        id: c.id,
         fecha: fechaCorta(c.fecha),
         turno: c.horario || c.turno || '',
         cajero: c.cajero || '',
@@ -576,16 +577,21 @@ function renderReporte() {
       : `<div class="tabla-scroll">
         <table class="tabla">
           <thead><tr>${datos.columnas.map(c =>
-            `<th class="${c.tipo === 'dinero' || c.tipo === 'numero' ? 'der' : ''}">${esc(c.titulo)}</th>`).join('')}</tr></thead>
+            `<th class="${c.tipo === 'dinero' || c.tipo === 'numero' ? 'der' : ''}">${esc(c.titulo)}</th>`).join('')}
+            ${REP.tipo === 'cortes' ? '<th class="no-imprimir"></th>' : ''}</tr></thead>
           <tbody>${datos.filas.map(f => `<tr>${datos.columnas.map(c =>
-            `<td class="${clase(c, f)}">${celda(f, c)}</td>`).join('')}</tr>`).join('')}</tbody>
+            `<td class="${clase(c, f)}">${celda(f, c)}</td>`).join('')}
+            ${REP.tipo === 'cortes' ? `<td class="no-imprimir">
+              <button class="btn-icono" title="Corregir turno" onclick="editarCorte('${f.id}')">${icono('lapiz', 15)}</button>
+            </td>` : ''}</tr>`).join('')}</tbody>
           <tfoot><tr>${datos.columnas.map(c => {
             const v = datos.totales[c.clave];
             if (v === undefined) return '<th></th>';
             const esNum = c.tipo === 'dinero' || c.tipo === 'numero';
             return `<th class="${esNum ? 'der mono' : ''}">${
               esNum ? (c.tipo === 'dinero' ? fmt(v) : fmtNum(v, num(v) % 1 ? 2 : 0)) : esc(v)}</th>`;
-          }).join('')}</tr></tfoot>
+          }).join('')}
+            ${REP.tipo === 'cortes' ? '<th class="no-imprimir"></th>' : ''}</tr></tfoot>
         </table>
       </div>
       <p class="hint">${fmtNum(datos.filas.length)} renglón(es).</p>`}

@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '33';
+const VERSION_APP = '34';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,9 @@ const VERSION_APP = '33';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '34': [
+    'Nuevo botón para corregir un turno directo desde Reportes → Cortes de caja, junto a cada renglón.',
+  ],
   '33': [
     'Nuevo botón "Novedades" en la barra de arriba: aquí se puede ver, cuando quieras, qué cambió en cada actualización.',
     'Se corrige que "Corregir turno" no apareciera en el reporte de un corte mientras hubiera otro turno abierto.',
