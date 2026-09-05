@@ -104,9 +104,12 @@ function saveConfig(patch) {
 
 /* ------------------------------------------------------------- numéricos */
 
-/** Convierte cualquier cosa a número finito; si no puede, devuelve `def`. */
+/** Convierte cualquier cosa a número finito; si no puede, devuelve `def`.
+ *  Algunos teclados (numérico, o de celular en español) escriben "," donde
+ *  se espera el punto decimal: se acepta igual, para no perder el número. */
 function num(v, def = 0) {
-  const n = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(/[^0-9.\-+]/g, ''));
+  const n = typeof v === 'number' ? v
+    : parseFloat(String(v ?? '').replace(',', '.').replace(/[^0-9.\-+]/g, ''));
   return Number.isFinite(n) ? n : def;
 }
 
@@ -902,6 +905,17 @@ function activarCamposCalculadora(raiz = document) {
   raiz.addEventListener('focusout', (e) => {
     const el = e.target;
     if (el instanceof HTMLInputElement && el.classList.contains('js-calc')) aplicarFormula(el);
+  });
+  // El teclado numérico (o uno en español) a veces escribe "," como punto
+  // decimal: se convierte al toque para que el número se vea bien de una vez,
+  // no sólo al calcularlo.
+  raiz.addEventListener('input', (e) => {
+    const el = e.target;
+    if (!(el instanceof HTMLInputElement) || !el.classList.contains('js-calc')) return;
+    if (!el.value.includes(',')) return;
+    const pos = el.selectionStart;
+    el.value = el.value.replace(/,/g, '.');
+    if (pos !== null) el.setSelectionRange(pos, pos);
   });
   // La rueda del ratón sobre un campo numérico cambia su valor sin querer
   raiz.addEventListener('wheel', (e) => {

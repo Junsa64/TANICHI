@@ -811,6 +811,8 @@ function pintarReporte(c, preliminar = false) {
       <button class="btn btn-primary" onclick="imprimirReporte()">${icono('imprimir')}Imprimir o guardar en PDF</button>
       <button class="btn btn-ghost" onclick="exportarCorteTXT()">${icono('recibo')}Descargar TXT</button>
       ${preliminar ? '' : `<button class="btn btn-ghost" onclick="exportarRespaldo()">${icono('bajar')}Respaldo completo</button>`}
+      ${!preliminar && !TURNO.abierto
+        ? `<button class="btn btn-ghost" onclick="editarCorte('${c.id}')">${icono('lapiz')}Corregir turno</button>` : ''}
       ${!preliminar && TURNO.abierto
         ? `<button class="btn btn-ghost" onclick="volverAlTurnoEnCurso()">${icono('regresar')}Ver el turno en curso</button>` : ''}
       ${!TURNO.abierto

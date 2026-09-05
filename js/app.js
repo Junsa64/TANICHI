@@ -345,7 +345,36 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '31';
+const VERSION_APP = '32';
+
+/* ------------------------------------------------------------ novedades ---
+   Qué trae cada versión, para avisar apenas se instala (no en Ajustes: ahí
+   ya no sorprende a nadie). Sólo la versión actual necesita su lista; las
+   de versiones viejas ya se mostraron y se pueden dejar de lado. */
+const NOVEDADES = {
+  '32': [
+    'Nuevo botón "Corregir turno" en el reporte del corte, para arreglarlo sin ir al historial.',
+    'Al escribir importes o cantidades, la coma "," también funciona como punto decimal.',
+  ],
+};
+
+/** Avisa qué cambió apenas se instala una versión nueva. La primera vez que
+ *  corre esta función en un equipo no avisa nada —no hay "versión anterior"
+ *  con qué compararla—, sólo se guarda la actual como punto de partida. */
+function mostrarNovedadesSiHayActualizacion() {
+  const ui = Store.get(DB.ui, {});
+  const vista = ui.versionVista;
+  if (vista === VERSION_APP) return;
+  if (vista && NOVEDADES[VERSION_APP]) {
+    confirmar({
+      titulo: `Novedades de la versión ${VERSION_APP}`,
+      mensaje: `<ul class="lista-dif">${NOVEDADES[VERSION_APP].map(n => `<li>${esc(n)}</li>`).join('')}</ul>`,
+      ok: 'Entendido', cancelar: 'Cerrar',
+    });
+  }
+  ui.versionVista = VERSION_APP;
+  Store.set(DB.ui, ui);
+}
 
 /**
  * Se cura sola cuando quedó una copia vieja guardada.
@@ -590,6 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   irA(permitida ? pedida : (TURNO.abierto ? 'pos' : 'apertura'));
   renderEstadoRespaldo();
   registrarServicio();
+  mostrarNovedadesSiHayActualizacion();
 
   // Guardado periódico de seguridad mientras el turno está abierto
   setInterval(() => { if (TURNO.abierto) guardarTurno({ inmediato: true }); }, 30000);
