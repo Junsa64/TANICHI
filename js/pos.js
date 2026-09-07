@@ -1463,7 +1463,9 @@ function renderListaVentas() {
                        onclick="abrirDevolucion('${v.id}')">${icono('regresar')}</button>
                <button class="btn-icono" title="Corregir: anula y vuelve al carrito"
                        onclick="corregirVenta('${v.id}')">${icono('lapiz')}</button>` : '')}
-          ${v.cancelada ? '' : `<button class="btn-icono peligro" title="Cancelar movimiento"
+          ${v.cancelada ? '' : `<button class="btn-icono" title="Quitar de este turno: no se cancela ni se borra, sólo deja de contarse aquí"
+                     onclick="quitarDeTurno('${v.id}')">${icono('etiqueta')}</button>`}
+          ${v.cancelada ? '' : `<button class="btn-icono peligro" title="Cancelar movimiento: la anula, como si no hubiera pasado"
                      onclick="cancelarVenta('${v.id}')">${icono('cerrar')}</button>`}
         </div>
       </div>`;
@@ -1499,6 +1501,35 @@ async function cancelarVenta(id) {
   actualizarEstadoGlobal();
   respaldarPronto('cancelacion');
   toast(`Folio #${v.folio} cancelado.`, 'info');
+  renderListaVentas();
+}
+
+/** Para cuando una venta quedó mal etiquetada —de otro turno, o de un
+ *  respaldo importado— y por eso se cuenta donde no debe. A diferencia de
+ *  cancelarVenta(), la venta sigue existiendo tal cual: sólo deja de
+ *  contarse en ESTE turno. Sigue en reportes e historial por fecha. */
+async function quitarDeTurno(id) {
+  const ventas = getVentas();
+  const v = ventas.find(x => x.id === id);
+  if (!v || v.cancelada) return;
+
+  const ok = await confirmar({
+    titulo: 'Quitar del turno',
+    mensaje: `El folio <strong>#${v.folio}</strong> por ${fmt(v.total)} dejará de contarse en este turno.<br>
+              No se cancela ni se borra: sigue existiendo igual, sólo se destraba de este corte.`,
+    ok: 'Quitar del turno',
+  });
+  if (!ok) return;
+
+  v.turnoId = null;
+  setVentas(ventas);
+
+  renderResumenTurnoPos();
+  actualizarEstadoGlobal();
+  if (VISTA === 'corte') renderCorte();
+  respaldarPronto('quitar-de-turno');
+  toast(`Folio #${v.folio} ya no se cuenta en este turno.`, 'info');
+  renderListaVentas();
 }
 
 /* ==================================================== DEVOLUCIONES =====

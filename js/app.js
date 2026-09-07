@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '36';
+const VERSION_APP = '37';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,9 +353,12 @@ const VERSION_APP = '36';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '37': [
+    'Nuevo botón "Quitar de este turno" en Revisar ventas del turno: para una venta real pero mal etiquetada —de otro turno, o de un respaldo importado— que no debe cancelarse. No se borra ni se cancela, sólo deja de contarse en el turno actual.',
+  ],
   '36': [
     'Se corrige que importar un respaldo viejo pudiera revivir una venta ya cancelada, o deshacer la corrección de un corte —ganaba el respaldo, sin importar qué tan viejo fuera—.',
-    'En Corte de caja → Cuadre, si el efectivo no cuadra por de más, aparece un botón para revisar las ventas del turno y cancelar la que no corresponda, sin borrar nada.',
+    'En Corte de caja → Cuadre, si el efectivo no cuadra, aparece un botón para revisar las ventas del turno y corregir la que no corresponda, sin borrar nada.',
   ],
   '35': [
     'Nuevo apartado en Reportes para exportar o importar un respaldo, sin tener que ir a Ajustes.',

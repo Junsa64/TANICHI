@@ -556,6 +556,7 @@ function pistasCaja(dif, c) {
   if (dif < 0) {
     p.push('Revisa que hayas registrado todos los egresos y la dotación a cartera.');
     if (num(c.totalRecargas) > 0) p.push('Confirma que las recargas se cobraron en efectivo.');
+    p.push('¿Aparece una venta que no reconoces, o que es de otro turno? Revísala abajo: se puede quitar de este turno sin cancelarla.');
     p.push('Vuelve a contar el efectivo: es el error más común.');
   } else {
     p.push('Puede haber una venta cobrada en efectivo que no se registró.');
