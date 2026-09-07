@@ -711,13 +711,37 @@ async function importarRespaldo(ev) {
     return [...mapa.values()];
   };
 
-  // Un respaldo de la versión anterior trae los campos con otros nombres
-  const cortes = fusionar(Store.get(DB.cortes, []), cortesNuevos.map(normalizarCorteLegacy))
+  // Un respaldo de la versión anterior trae los campos con otros nombres.
+  // Si el mismo corte ya se corrigió aquí (editarCorte), un respaldo más
+  // viejo no debe pisar esa corrección sin darse cuenta: gana el que se
+  // editó más recientemente.
+  const cortesActuales = Store.get(DB.cortes, []);
+  const mapaCortes = new Map(cortesActuales.map(c => [String(c.id), c]));
+  cortesNuevos.map(normalizarCorteLegacy).forEach(c => {
+    if (!c || c.id === undefined) return;
+    const clave = String(c.id);
+    const existente = mapaCortes.get(clave);
+    if (existente && String(existente.editadoEn || '') > String(c.editadoEn || '')) return;
+    mapaCortes.set(clave, c);
+  });
+  const cortes = [...mapaCortes.values()]
     .sort((a, b) => String(b.fechaHora || '').localeCompare(String(a.fechaHora || '')));
   Store.set(DB.cortes, cortes);
 
   if (Array.isArray(data.ventas)) {
-    const ventas = fusionar(Store.get(DB.ventas, []), data.ventas)
+    // Igual con una venta cancelada (arreglar el efectivo sin borrar nada):
+    // si aquí ya está cancelada y el respaldo trae una copia vieja sin
+    // cancelar, la importación no debe revivirla.
+    const ventasActuales = Store.get(DB.ventas, []);
+    const mapaVentas = new Map(ventasActuales.map(v => [String(v.id), v]));
+    data.ventas.forEach(v => {
+      if (!v || v.id === undefined) return;
+      const clave = String(v.id);
+      const existente = mapaVentas.get(clave);
+      if (existente && existente.cancelada && !v.cancelada) return;
+      mapaVentas.set(clave, v);
+    });
+    const ventas = [...mapaVentas.values()]
       .sort((a, b) => String(b.fechaHora || '').localeCompare(String(a.fechaHora || '')));
     Store.set(DB.ventas, ventas);
     invalidarVentas();          // lo guardado en memoria quedó viejo

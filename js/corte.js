@@ -603,6 +603,8 @@ function renderCuadre() {
       ${b.ok ? '' : `<div class="cuadre-pistas">
         <strong>${tituloPista}</strong>
         <ul>${b.pistas.map(p => `<li>${p}</li>`).join('')}</ul>
+        ${b.clave === 'caja' ? `<button class="btn btn-ghost compacto" onclick="abrirMovimientos()">
+          ${icono('ojo', 15)}Revisar ventas del turno</button>` : ''}
       </div>`}
     </div>`;
   }).join('');
