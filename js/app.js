@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '34';
+const VERSION_APP = '35';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,11 @@ const VERSION_APP = '34';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '35': [
+    'Nuevo apartado en Reportes para exportar o importar un respaldo, sin tener que ir a Ajustes.',
+    'Recuerda: cada navegador o equipo guarda sus propios datos por separado. Si abriste la app en otro lado y no ves nada, no se borró: hay que exportar un respaldo de donde sí estén e importarlo ahí.',
+    'Por seguridad, los diálogos de borrar algo ya no arrancan enfocados en el botón de borrar: un Enter de más ya no puede borrar nada solo.',
+  ],
   '34': [
     'Nuevo botón para corregir un turno directo desde Reportes → Cortes de caja, junto a cada renglón.',
   ],

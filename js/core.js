@@ -394,7 +394,10 @@ function confirmar({ titulo, mensaje, ok = 'Aceptar', cancelar = 'Cancelar', pel
 
     overlay.classList.add('visible');
     document.body.classList.add('modal-open');
-    setTimeout(() => btnOk.focus(), 60);
+    // En una acción peligrosa el foco arranca en Cancelar: un Enter de más
+    // —por ir rápido, o por encadenarse con otro diálogo— no debe poder
+    // borrar nada por sí solo.
+    setTimeout(() => (peligro ? btnNo : btnOk).focus(), 60);
   });
 }
 

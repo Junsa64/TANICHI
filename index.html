@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="34"/>
+<meta name="tanichi-version" content="35"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=34"/>
+<link rel="stylesheet" href="style.css?v=35"/>
 </head>
 <body>
 
@@ -708,6 +708,16 @@
   </div>
 
   <div id="rep-botones" class="rep-botones"></div>
+
+  <div class="rep-periodo rep-respaldo no-imprimir">
+    <span class="hint">¿No ves tus datos, o se ven distintos? Puedes exportar un respaldo para guardarlo aparte,
+      o importar uno guardado antes —por ejemplo, si abriste la app en otro navegador o equipo, donde no se guarda nada
+      hasta que se importa—.</span>
+    <button class="btn btn-ghost" onclick="exportarRespaldo()"><span data-ico="bajar"></span> Exportar respaldo</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('rep-import-respaldo').click()">
+      <span data-ico="subir"></span> Importar respaldo</button>
+    <input type="file" id="rep-import-respaldo" accept=".json,application/json" hidden onchange="importarRespaldo(event)"/>
+  </div>
 
   <div class="rep-periodo no-imprimir">
     <span class="campo-lbl">Periodo</span>
@@ -1514,16 +1524,16 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=34"></script>
-<script src="js/iconos.js?v=34"></script>
-<script src="js/turno.js?v=34"></script>
-<script src="js/pos.js?v=34"></script>
-<script src="js/inventario.js?v=34"></script>
-<script src="js/corte.js?v=34"></script>
-<script src="js/historial.js?v=34"></script>
-<script src="js/reportes.js?v=34"></script>
-<script src="js/fotos.js?v=34"></script>
-<script src="js/fiados.js?v=34"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/core.js?v=35"></script>
+<script src="js/iconos.js?v=35"></script>
+<script src="js/turno.js?v=35"></script>
+<script src="js/pos.js?v=35"></script>
+<script src="js/inventario.js?v=35"></script>
+<script src="js/corte.js?v=35"></script>
+<script src="js/historial.js?v=35"></script>
+<script src="js/reportes.js?v=35"></script>
+<script src="js/fotos.js?v=35"></script>
+<script src="js/fiados.js?v=35"></script>
+<script src="js/app.js?v=35"></script>
 </body>
 </html>
