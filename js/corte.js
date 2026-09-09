@@ -526,13 +526,21 @@ async function quitarTraspasoCorte(i) {
   renderCorte();
 }
 
+/** Como setVal(), pero no toca el campo si es el que se está escribiendo:
+ *  si no, cada tecleo —incluido el punto decimal— se borra solo, porque
+ *  el valor se redondea y se vuelve a pintar antes de terminar de escribir. */
+function setValSalvo(id, v) {
+  if (document.activeElement && document.activeElement.id === id) return;
+  setVal(id, v);
+}
+
 function renderPanelSaldos() {
-  setVal('sal-mp-inicial', TURNO.mpInicial || '');
-  setVal('sal-mp-retiros', TURNO.mpRetiros || '');
-  setVal('sal-mp-cierre', TURNO.mpCierre || '');
-  setVal('sal-cartera-inicial', TURNO.carteraInicial || '');
-  setVal('sal-dotacion', TURNO.dotacion || '');
-  setVal('sal-cartera-cierre', TURNO.carteraCierre || '');
+  setValSalvo('sal-mp-inicial', TURNO.mpInicial || '');
+  setValSalvo('sal-mp-retiros', TURNO.mpRetiros || '');
+  setValSalvo('sal-mp-cierre', TURNO.mpCierre || '');
+  setValSalvo('sal-cartera-inicial', TURNO.carteraInicial || '');
+  setValSalvo('sal-dotacion', TURNO.dotacion || '');
+  setValSalvo('sal-cartera-cierre', TURNO.carteraCierre || '');
   // La dotación sólo se muestra si un corte viejo la traía: lo nuevo son traspasos
   show('sal-dotacion-wrap', num(TURNO.dotacion) > 0, 'flex');
   renderTraspasosCorte();
@@ -541,8 +549,8 @@ function renderPanelSaldos() {
   show('sal-tc-tarjeta', monitoreoTC, 'block');
   if (monitoreoTC) {
     setText('sal-tc-titulo', CUENTAS.tc.largo);
-    setVal('sal-tc-inicial', TURNO.tcInicial || '');
-    setVal('sal-tc-cierre', TURNO.tcCierre || '');
+    setValSalvo('sal-tc-inicial', TURNO.tcInicial || '');
+    setValSalvo('sal-tc-cierre', TURNO.tcCierre || '');
     renderProximasFechasTC('sal-tc-proximas');
   }
 
