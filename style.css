@@ -173,7 +173,7 @@ em { font-style: normal; color: var(--gris2); font-weight: 400; }
 /* ----------------------------------------------------------- encabezado */
 .cabecera {
   position: sticky; top: 0; z-index: 60;
-  display: flex; align-items: stretch; justify-content: space-between;
+  display: flex; align-items: stretch; justify-content: space-between; flex-wrap: wrap;
   background: var(--turquesa); color: #fdfbf6;
   border-bottom: var(--borde);
 }
@@ -211,7 +211,7 @@ em { font-style: normal; color: var(--gris2); font-weight: 400; }
 .cab-reloj strong { font-size: 15px; font-weight: 800; }
 .cab-reloj span { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
 
-.cab-acciones { display: flex; align-items: stretch; }
+.cab-acciones { display: flex; align-items: stretch; flex-wrap: wrap; justify-content: flex-end; }
 .cab-acciones .btn, .cab-acciones .btn-icono {
   border: 0; border-left: var(--divisor-cab); background: transparent; color: #fdfbf6;
   padding: 0 20px; font-size: 12px; font-weight: 800;
@@ -333,6 +333,10 @@ body.compacta .encabezado-vista p { display: none; }
 .rejilla-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
 .rejilla-apertura { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 20px; align-items: start; }
 .rejilla-efectivo { display: grid; grid-template-columns: 1fr minmax(300px, 400px); gap: 20px; align-items: start; }
+/* Sin esto, la columna no se encoge más que la tabla de piezas y billetes
+   que trae dentro: en vez de que ESA tabla saque su propia barra —ya tiene
+   .tabla-scroll— empuja toda la página de lado. */
+.rejilla-apertura > *, .rejilla-efectivo > * { min-width: 0; }
 .rejilla-cuadre { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 22px; }
 .rejilla-graficas { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
 

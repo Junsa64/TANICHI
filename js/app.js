@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '40';
+const VERSION_APP = '41';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,9 @@ const VERSION_APP = '40';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '41': [
+    'Encontrada la causa real de la barra para deslizar: no era "la versión de mobil", era la barra de arriba (Historial, Novedades, tema) que no cabía en ventanas de ancho normal y empujaba toda la página de lado. Ahora se acomoda en dos filas si hace falta, en cualquier tamaño de ventana —no sólo en celular—, sin verse distinta a como se ve siempre.',
+  ],
   '40': [
     'Se revierte el cambio en la tabla de piezas y billetes que sacaba una barra para deslizar: quedó como estaba.',
     '"Eliminar duplicados" en Inventario ahora avisa solo, arriba de la lista, en cuanto detecta productos repetidos —ya no hay que buscar el botón hasta abajo—.',
