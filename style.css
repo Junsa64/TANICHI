@@ -333,10 +333,6 @@ body.compacta .encabezado-vista p { display: none; }
 .rejilla-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
 .rejilla-apertura { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 20px; align-items: start; }
 .rejilla-efectivo { display: grid; grid-template-columns: 1fr minmax(300px, 400px); gap: 20px; align-items: start; }
-/* Sin esto, una columna no se encoge más que la tabla de denominaciones
-   que trae dentro: en vez de que ESA tabla saque su propia barra de
-   desplazamiento (ya tiene .tabla-scroll), empuja toda la página de lado. */
-.rejilla-apertura > *, .rejilla-efectivo > * { min-width: 0; }
 .rejilla-cuadre { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 22px; }
 .rejilla-graficas { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
 
@@ -1128,10 +1124,6 @@ select.input { cursor: pointer; }
   .cabecera { flex-wrap: wrap; }
   .cab-marca { flex: 1; }
   .cab-reloj { display: none; }
-  /* Guardado + Historial + Novedades + tema + pantalla completa ya no caben
-     en una sola fila angosta: que se acomoden en la que sigan, no que
-     empujen toda la página de lado. */
-  .cab-acciones { flex-wrap: wrap; justify-content: flex-end; row-gap: 1px; }
   .estado { order: 3; width: 100%; border-right: 0; border-top: var(--divisor-cab); justify-content: flex-start; }
   .nav { top: 0; }
   .contenido { padding: 20px 14px 80px; }

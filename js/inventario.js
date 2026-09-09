@@ -43,6 +43,15 @@ function renderInventario() {
          <button class="link" onclick="filtrarInventario('bajos')">Ver cuáles</button></div>`
       : '';
   }
+  const alertaDup = document.getElementById('inv-alerta-duplicados');
+  if (alertaDup) {
+    const nDup = [...gruposDeInventario().values()].filter(g => g.length > 1).length;
+    alertaDup.style.display = nDup ? 'flex' : 'none';
+    alertaDup.innerHTML = nDup
+      ? `<span>${icono('alerta', 20)}</span><div><strong>${nDup} producto(s) están repetidos.</strong>
+         <button class="link" onclick="eliminarDuplicadosInventario()">Combinarlos</button></div>`
+      : '';
+  }
 
   /* filtros y orden */
   let lista = productos.filter(p => {
@@ -227,20 +236,25 @@ async function eliminarProducto(id) {
   toast('Producto eliminado.', 'info');
 }
 
-/** Junta de un jalón los productos que se repitieron —típicamente por
- *  importar un CSV o un respaldo dos veces—. Agrupa por nombre (sin
- *  espacios de más ni mayúsculas), conserva un solo renglón por grupo y le
- *  suma la existencia de los demás: no se pierde inventario, sólo se
- *  destraban los renglones de más. */
-async function eliminarDuplicadosInventario() {
-  const productos = getProductos();
+/** Agrupa el catálogo por nombre (sin espacios de más ni mayúsculas), para
+ *  encontrar productos repetidos —típicamente por importar un CSV o un
+ *  respaldo dos veces—. */
+function gruposDeInventario() {
   const grupos = new Map();
-  productos.forEach(p => {
+  getProductos().forEach(p => {
     const clave = String(p.nombre || '').trim().toLowerCase().replace(/\s+/g, ' ');
     if (!clave) return;
     if (!grupos.has(clave)) grupos.set(clave, []);
     grupos.get(clave).push(p);
   });
+  return grupos;
+}
+
+/** Junta de un jalón los productos que se repitieron: conserva un solo
+ *  renglón por grupo y le suma la existencia de los demás —no se pierde
+ *  inventario, sólo se destraban los renglones de más—. */
+async function eliminarDuplicadosInventario() {
+  const grupos = gruposDeInventario();
   const repetidos = [...grupos.values()].filter(g => g.length > 1);
   if (!repetidos.length) { toast('No se encontraron productos duplicados.', 'info'); return; }
 

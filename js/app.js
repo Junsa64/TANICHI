@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '39';
+const VERSION_APP = '40';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,10 @@ const VERSION_APP = '39';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '40': [
+    'Se revierte el cambio en la tabla de piezas y billetes que sacaba una barra para deslizar: quedó como estaba.',
+    '"Eliminar duplicados" en Inventario ahora avisa solo, arriba de la lista, en cuanto detecta productos repetidos —ya no hay que buscar el botón hasta abajo—.',
+  ],
   '39': [
     'Encontrado y corregido el bug del punto decimal: en Corte de caja → Saldos (Mercado Pago, Cartera y Tarjeta de crédito), cada tecla borraba el punto que acababas de escribir porque el campo se volvía a pintar antes de terminar. Ya no.',
   ],
