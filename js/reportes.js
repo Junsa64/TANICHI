@@ -21,16 +21,18 @@ const NIVELES = {
   producto: 'Renglón por renglón',
 };
 
-const REP = { tipo: 'ventas', nivel: 'dia', desde: '', hasta: '', datos: null };
+const REP = { tipo: 'ventas', nivel: 'dia', desde: '', hasta: '', metodoPago: 'todos', datos: null };
 
 /* ---------------------------------------------------------- utilidades */
 
-/** Movimientos válidos dentro del periodo elegido. */
+/** Movimientos válidos dentro del periodo elegido —y, si se filtró, sólo
+ *  los que se pagaron (o se devolvieron) con esa forma de pago—. */
 function movimientosDelPeriodo() {
   return getVentas().filter(v => {
     if (v.cancelada) return false;
     if (REP.desde && String(v.fecha) < REP.desde) return false;
     if (REP.hasta && String(v.fecha) > REP.hasta) return false;
+    if (REP.metodoPago !== 'todos' && !(v.pagos || []).some(p => p.metodo === REP.metodoPago)) return false;
     return true;
   });
 }
@@ -44,10 +46,13 @@ function cortesDelPeriodo() {
 }
 
 function etiquetaPeriodo() {
-  if (REP.desde && REP.hasta) return `Del ${fechaCorta(REP.desde)} al ${fechaCorta(REP.hasta)}`;
-  if (REP.desde) return `Desde ${fechaCorta(REP.desde)}`;
-  if (REP.hasta) return `Hasta ${fechaCorta(REP.hasta)}`;
-  return 'Todo el historial';
+  const rango = REP.desde && REP.hasta ? `Del ${fechaCorta(REP.desde)} al ${fechaCorta(REP.hasta)}`
+    : REP.desde ? `Desde ${fechaCorta(REP.desde)}`
+    : REP.hasta ? `Hasta ${fechaCorta(REP.hasta)}`
+    : 'Todo el historial';
+  const pago = REP.metodoPago !== 'todos' && METODOS_PAGO[REP.metodoPago]
+    ? ` · Pagado con ${METODOS_PAGO[REP.metodoPago].label.toLowerCase()}` : '';
+  return rango + pago;
 }
 
 /** Atajos de periodo que se usan a diario. */
@@ -492,6 +497,11 @@ function fijarNivelReporte(n) {
   renderReporte();
 }
 
+function fijarMetodoPagoReporte(m) {
+  REP.metodoPago = (m === 'todos' || METODOS_PAGO[m]) ? m : 'todos';
+  renderReporte();
+}
+
 function renderReportes() {
   const cont = document.getElementById('rep-botones');
   if (cont) {
@@ -562,6 +572,14 @@ function renderReporte() {
           <button class="chip ${REP.nivel === k ? 'activo' : ''}" onclick="fijarNivelReporte('${k}')">${n}</button>`).join('')}
       </div>` : ''}
 
+    ${REP.tipo !== 'cortes' ? `
+      <div class="rep-niveles no-imprimir">
+        <span class="campo-lbl">Forma de pago</span>
+        <button class="chip ${REP.metodoPago === 'todos' ? 'activo' : ''}" onclick="fijarMetodoPagoReporte('todos')">Todas</button>
+        ${Object.entries(METODOS_PAGO).map(([k, m]) => `
+          <button class="chip ${REP.metodoPago === k ? 'activo' : ''}" onclick="fijarMetodoPagoReporte('${k}')">${m.label}</button>`).join('')}
+      </div>` : ''}
+
     <div class="rep-resumen">
       ${datos.resumen.map(([k, v]) => {
         // La ganancia neta es el número que se busca: se ve distinto
@@ -582,6 +600,7 @@ function renderReporte() {
           <tbody>${datos.filas.map(f => `<tr>${datos.columnas.map(c =>
             `<td class="${clase(c, f)}">${celda(f, c)}</td>`).join('')}
             ${REP.tipo === 'cortes' ? `<td class="no-imprimir">
+              <button class="btn-icono" title="Ver todos los datos del corte" onclick="verCorte('${f.id}')">${icono('ojo', 15)}</button>
               <button class="btn-icono" title="Corregir turno" onclick="editarCorte('${f.id}')">${icono('lapiz', 15)}</button>
             </td>` : ''}</tr>`).join('')}</tbody>
           <tfoot><tr>${datos.columnas.map(c => {

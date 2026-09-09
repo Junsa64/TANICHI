@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '37';
+const VERSION_APP = '38';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,12 @@ const VERSION_APP = '37';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '38': [
+    'Nuevo botón "Eliminar duplicados" en Inventario: junta de un jalón los productos con el nombre repetido, sumando su existencia —no se pierde inventario—.',
+    'Se corrige que la tabla de piezas y billetes empujara toda la pantalla de lado en un celular; ahora se acomoda y, si no cabe, se desliza ella sola.',
+    'En Reportes se puede filtrar por forma de pago (efectivo, tarjeta, transferencia, fiado).',
+    'En Reportes → Cortes de caja, nuevo botón para ver todos los datos de un corte —el reporte completo— sin entrar a corregirlo.',
+  ],
   '37': [
     'Nuevo botón "Quitar de este turno" en Revisar ventas del turno: para una venta real pero mal etiquetada —de otro turno, o de un respaldo importado— que no debe cancelarse. No se borra ni se cancela, sólo deja de contarse en el turno actual.',
   ],

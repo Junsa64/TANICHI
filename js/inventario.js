@@ -227,6 +227,60 @@ async function eliminarProducto(id) {
   toast('Producto eliminado.', 'info');
 }
 
+/** Junta de un jalón los productos que se repitieron —típicamente por
+ *  importar un CSV o un respaldo dos veces—. Agrupa por nombre (sin
+ *  espacios de más ni mayúsculas), conserva un solo renglón por grupo y le
+ *  suma la existencia de los demás: no se pierde inventario, sólo se
+ *  destraban los renglones de más. */
+async function eliminarDuplicadosInventario() {
+  const productos = getProductos();
+  const grupos = new Map();
+  productos.forEach(p => {
+    const clave = String(p.nombre || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!clave) return;
+    if (!grupos.has(clave)) grupos.set(clave, []);
+    grupos.get(clave).push(p);
+  });
+  const repetidos = [...grupos.values()].filter(g => g.length > 1);
+  if (!repetidos.length) { toast('No se encontraron productos duplicados.', 'info'); return; }
+
+  const totalSobrantes = repetidos.reduce((s, g) => s + g.length - 1, 0);
+  const ejemplos = repetidos.slice(0, 5).map(g => esc(g[0].nombre)).join(', ');
+  const masTexto = repetidos.length > 5 ? ` y ${repetidos.length - 5} más` : '';
+
+  const ok = await confirmar({
+    titulo: 'Eliminar duplicados',
+    mensaje: `Se encontraron <strong>${repetidos.length}</strong> producto(s) con el nombre repetido
+              (${totalSobrantes} renglón(es) de más): ${ejemplos}${masTexto}.<br><br>
+              Por cada uno se conserva un solo renglón y se le suma la existencia de los demás
+              antes de quitarlos —no se pierde inventario—. Se conservan el precio, costo y foto
+              del que quede.`,
+    ok: 'Eliminar duplicados', peligro: true,
+  });
+  if (!ok) return;
+
+  const fotos = getFotos();
+  const restantes = [];
+  grupos.forEach(g => {
+    if (g.length === 1) { restantes.push(g[0]); return; }
+    const ordenado = [...g].sort((a, b) => {
+      const fa = fotos[a.id] ? 1 : 0, fb = fotos[b.id] ? 1 : 0;
+      if (fa !== fb) return fb - fa;
+      return num(b.stock) - num(a.stock);
+    });
+    const sobreviviente = ordenado[0];
+    sobreviviente.stock = redondear(g.reduce((s, p) => s + num(p.stock), 0), 3);
+    ordenado.slice(1).forEach(p => borrarFoto(p.id));
+    restantes.push(sobreviviente);
+  });
+
+  setProductos(restantes);
+  renderInventario();
+  renderPos();
+  respaldarPronto('inventario');
+  toast(`Se combinaron ${totalSobrantes} producto(s) duplicado(s) en ${repetidos.length}.`, 'success', 5000);
+}
+
 /* --------------------------------------------------- entrada de mercancía */
 function abrirEntrada(id) {
   const p = buscarProducto(id);

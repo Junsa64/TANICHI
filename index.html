@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="37"/>
+<meta name="tanichi-version" content="38"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=37"/>
+<link rel="stylesheet" href="style.css?v=38"/>
 </head>
 <body>
 
@@ -320,6 +320,7 @@
       <input type="file" id="import-csv" accept=".csv,text/csv" hidden onchange="importarCatalogoCSV(event)"/>
       <button class="btn btn-ghost" onclick="exportarCatalogoCSV()"><span data-ico="subir"></span> Exportar CSV</button>
       <button class="btn btn-ghost" onclick="cargarCatalogoEjemplo()"><span data-ico="rayo"></span> Cargar productos de ejemplo</button>
+      <button class="btn btn-ghost" onclick="eliminarDuplicadosInventario()"><span data-ico="buscar"></span> Eliminar duplicados</button>
     </div>
   </div>
 </section>
@@ -1524,16 +1525,16 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=37"></script>
-<script src="js/iconos.js?v=37"></script>
-<script src="js/turno.js?v=37"></script>
-<script src="js/pos.js?v=37"></script>
-<script src="js/inventario.js?v=37"></script>
-<script src="js/corte.js?v=37"></script>
-<script src="js/historial.js?v=37"></script>
-<script src="js/reportes.js?v=37"></script>
-<script src="js/fotos.js?v=37"></script>
-<script src="js/fiados.js?v=37"></script>
-<script src="js/app.js?v=37"></script>
+<script src="js/core.js?v=38"></script>
+<script src="js/iconos.js?v=38"></script>
+<script src="js/turno.js?v=38"></script>
+<script src="js/pos.js?v=38"></script>
+<script src="js/inventario.js?v=38"></script>
+<script src="js/corte.js?v=38"></script>
+<script src="js/historial.js?v=38"></script>
+<script src="js/reportes.js?v=38"></script>
+<script src="js/fotos.js?v=38"></script>
+<script src="js/fiados.js?v=38"></script>
+<script src="js/app.js?v=38"></script>
 </body>
 </html>
