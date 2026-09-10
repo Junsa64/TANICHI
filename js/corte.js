@@ -764,7 +764,10 @@ function pintarReporte(c, preliminar = false) {
               <tr><td>Transferencias recibidas</td><td class="der mono bueno">${fmt(c.transferencia)}</td></tr>
               <tr><td>Cobro de fiados</td><td class="der mono bueno">${fmt(c.pagoCreditos)}</td></tr>
               ${listaOtrosIng.join('')}
-              <tr><td>Recargas cobradas en efectivo</td><td class="der mono bueno">${fmt(c.totalRecargas)}</td></tr>
+              ${num(c.recargaEfectivo) ? `<tr><td>Recargas cobradas en efectivo</td><td class="der mono bueno">${fmt(c.recargaEfectivo)}</td></tr>` : ''}
+              ${num(c.recargaTarjeta) ? `<tr><td>Recargas cobradas con tarjeta (bruto)</td><td class="der mono bueno">${fmt(c.recargaTarjeta)}</td></tr>
+              <tr class="sub"><td>└ Neto que llega al banco</td><td class="der mono">${fmt(cuadre.recargaTarjetaNeto)}</td></tr>` : ''}
+              ${num(c.recargaTransferencia) ? `<tr><td>Recargas cobradas por transferencia</td><td class="der mono bueno">${fmt(c.recargaTransferencia)}</td></tr>` : ''}
               <tr class="sub"><td>└ Comisión devuelta por Mercado Pago</td><td class="der mono bueno">${fmt(c.comisionRecargas)}</td></tr>
               ${listaEgresos.join('')}
               <tr><td><b>Total de egresos</b></td><td class="der mono malo"><b>−${fmt(c.egresos)}</b></td></tr>
@@ -894,7 +897,12 @@ async function exportarCorteTXT() {
   L.push(linea('Cobro de fiados', fmt(c.pagoCreditos)));
   (c.otrosIngresosList || []).filter(x => num(x.monto) > 0)
     .forEach(x => L.push(linea(`Otro: ${x.desc || 'sin concepto'}`, fmt(x.monto))));
-  L.push(linea('Recargas cobradas', fmt(c.totalRecargas)));
+  if (num(c.recargaEfectivo)) L.push(linea('Recargas cobradas en efectivo', fmt(c.recargaEfectivo)));
+  if (num(c.recargaTarjeta)) {
+    L.push(linea('Recargas cobradas con tarjeta (bruto)', fmt(c.recargaTarjeta)));
+    L.push(linea('  neto al banco', fmt(cuadre.recargaTarjetaNeto)));
+  }
+  if (num(c.recargaTransferencia)) L.push(linea('Recargas cobradas por transferencia', fmt(c.recargaTransferencia)));
   L.push(linea('  comisión devuelta por MP', fmt(c.comisionRecargas)));
   if (num(c.creditoClientes) > 0) L.push(linea('Vendido a crédito (por cobrar)', fmt(c.creditoClientes)));
   L.push('');

@@ -1199,12 +1199,30 @@ function aplicarStock(items, signo) {
 }
 
 /* -------------------------------------------------------------- recargas */
+let RECARGA_METODO = 'efectivo';
+
 function abrirRecarga() {
   if (!exigirTurnoAbierto()) return;
+  RECARGA_METODO = 'efectivo';
   setVal('recarga-monto', '');
   setVal('recarga-desc', '');
+  renderMetodosRecarga();
   actualizarPreviewRecarga();
   abrirModal('modal-recarga');
+}
+
+function fijarMetodoRecarga(m) {
+  RECARGA_METODO = METODOS_PAGO[m] ? m : 'efectivo';
+  renderMetodosRecarga();
+  actualizarPreviewRecarga();
+}
+
+function renderMetodosRecarga() {
+  setHTML('recarga-metodos', ['efectivo', 'tarjeta', 'transferencia'].map(m => `
+    <button class="metodo ${RECARGA_METODO === m ? 'activo' : ''}" onclick="fijarMetodoRecarga('${m}')">
+      <span class="metodo-ico">${icono(METODOS_PAGO[m].icono, 22)}</span>
+      <span>${METODOS_PAGO[m].label}</span>
+    </button>`).join(''));
 }
 
 /* ============================================== ENVÍO DE DINERO ==========
@@ -1303,7 +1321,20 @@ function actualizarPreviewRecarga() {
   const com   = comisionPorRecargas(monto);
   setText('recarga-comision', fmt(com));
   setText('recarga-neto', fmt(monto - com));
-  setText('recarga-efectivo', fmt(monto));
+
+  // Lo que compra el tiempo aire (arriba) no cambia con el método; lo que
+  // entra sí: en efectivo va completo a la caja, con tarjeta la terminal
+  // descuenta su comisión, por transferencia llega completo a Mercado Pago.
+  if (RECARGA_METODO === 'tarjeta') {
+    setText('recarga-entra-lbl', `Entra a Mercado Pago (−${fmtNum(CONFIG.comisionTerminalPct, 2)}% de la terminal)`);
+    setText('recarga-efectivo', fmt(redondear(monto - comisionTerminal(monto))));
+  } else if (RECARGA_METODO === 'transferencia') {
+    setText('recarga-entra-lbl', 'Entra a tu cuenta de Mercado Pago');
+    setText('recarga-efectivo', fmt(monto));
+  } else {
+    setText('recarga-entra-lbl', 'Entra en efectivo a tu caja');
+    setText('recarga-efectivo', fmt(monto));
+  }
 }
 
 function registrarRecarga() {
@@ -1317,7 +1348,7 @@ function registrarRecarga() {
     fecha: TURNO.fecha || hoyISO(), fechaHora: new Date().toISOString(),
     items: [{ productoId: null, nombre: desc || 'Recarga de tiempo aire', sku: '', precio: monto, cantidad: 1, importe: monto, tipo: 'recarga' }],
     subtotal: monto, descuento: 0, total: monto,
-    pagos: [{ metodo: 'efectivo', monto }],   // el cliente siempre paga en efectivo
+    pagos: [{ metodo: RECARGA_METODO, monto }],
     recibido: monto, cambio: 0, cliente: '', cancelada: false,
   };
 
@@ -1330,7 +1361,7 @@ function registrarRecarga() {
   renderResumenTurnoPos();
   actualizarEstadoGlobal();
   respaldarPronto('recarga');
-  toast(`Recarga de ${fmt(monto)} registrada.`, 'success');
+  toast(`Recarga de ${fmt(monto)} registrada, cobrada con ${METODOS_PAGO[RECARGA_METODO].label.toLowerCase()}.`, 'success');
 }
 
 /* --------------------------------------------------------------- ticket */

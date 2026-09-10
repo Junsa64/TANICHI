@@ -104,7 +104,8 @@ function turnoVacio() {
     ticketsPendientes: [],   // formato anterior; se convierte al cargar
 
     // Ingresos capturados a mano (ventas que no pasaron por el POS)
-    manual: { ventaEfectivo: 0, transferencia: 0, tarjeta: 0, pagoCreditos: 0, creditoClientes: 0, recargas: 0 },
+    manual: { ventaEfectivo: 0, transferencia: 0, tarjeta: 0, pagoCreditos: 0, creditoClientes: 0,
+      recargas: 0, recargaTarjeta: 0, recargaTransferencia: 0 },
     otrosIngresos: [],                   // [{ id, desc, monto }]
 
     // Al reabrir un corte guardado, sus importes ya están congelados en
@@ -208,7 +209,8 @@ function posEnCero() {
     numVentas: 0, numRecargas: 0, numAbonos: 0, numDevoluciones: 0,
     efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0,
     abonosEfectivo: 0, abonosTransfer: 0,
-    recargas: 0, devuelto: 0, totalVendido: 0, piezas: 0,
+    recargas: 0, recargaEfectivo: 0, recargaTarjeta: 0, recargaTransferencia: 0,
+    devuelto: 0, totalVendido: 0, piezas: 0,
     numEnvios: 0, enviado: 0, comisionEnvios: 0, envioPorCuenta: { mp: 0, cartera: 0, caja: 0 },
   };
 }
@@ -255,7 +257,13 @@ function totalesPos(turnoId = TURNO.id) {
     // Los abonos a cuenta pueden cobrarse en efectivo o por transferencia
     abonosEfectivo: sumaPagos(abonos, 'efectivo'),
     abonosTransfer: sumaPagos(abonos, 'transferencia'),
+    // El total no depende de con qué pagó el cliente: la tienda de todos
+    // modos compra el tiempo aire de su saldo MP. Por método sí importa,
+    // para saber a qué cuenta entró lo que pagó el cliente.
     recargas:       redondear(recargas.reduce((s, v) => s + num(v.total), 0)),
+    recargaEfectivo: sumaPagos(recargas, 'efectivo'),
+    recargaTarjeta:  sumaPagos(recargas, 'tarjeta'),
+    recargaTransferencia: sumaPagos(recargas, 'transferencia'),
     devuelto:       redondear(devols.reduce((s, v) => s + num(v.total), 0)),
     totalVendido:   redondear(ventas.reduce((s, v) => s + num(v.total), 0) -
                               devols.reduce((s, v) => s + num(v.total), 0)),
@@ -403,6 +411,14 @@ function calcularCuadre(fuente = null) {
   const egresos       = num(c.egresos);
   const recargas      = num(c.totalRecargas);
   const comisionRec   = num(c.comisionRecargas);
+  // El cliente puede pagar la recarga por distintos medios; la tienda de
+  // todos modos compra el tiempo aire completo de su saldo MP (por eso
+  // `recargas` arriba sigue siendo el total, sin importar el método). Un
+  // corte de antes de que existiera esta distinción no trae recargaEfectivo:
+  // se asume que todo era en efectivo, como siempre fue hasta ahora.
+  const recargaEfectivo = c.recargaEfectivo !== undefined ? num(c.recargaEfectivo) : recargas;
+  const recargaTarjeta  = num(c.recargaTarjeta);
+  const recargaTransferencia = num(c.recargaTransferencia);
 
   /* Egresos repartidos por cuenta y traspasos entre cuentas. Un corte
      guardado antes de que esto existiera no trae ninguno de los dos: sus
@@ -419,18 +435,23 @@ function calcularCuadre(fuente = null) {
   const comEnvios   = num(c.comisionEnvios);
   const efectivoEnvios = redondear(enviado + comEnvios);
 
-  /* --- Caja: el cliente paga las recargas y los envíos en efectivo */
-  const esperadoCaja  = redondear(num(c.fondoApertura) + ingEfectivo + recargas
+  /* --- Caja: el cliente paga en efectivo la parte de recargas y envíos
+         que eligió pagar así (no siempre es todo) */
+  const esperadoCaja  = redondear(num(c.fondoApertura) + ingEfectivo + recargaEfectivo
                                   + efectivoEnvios - num(envCta.caja)
                                   - num(egr.caja) - dotacion + tras.caja);
   const contadoCaja   = redondear(num(c.efectivoContado));
   const difCaja       = redondear(contadoCaja - esperadoCaja);
 
-  /* --- Mercado Pago: la terminal descuenta su comisión antes de depositar,
-         y las recargas salen del saldo MP devolviendo su comisión.          */
+  /* --- Mercado Pago: la terminal descuenta su comisión antes de depositar
+         —tanto en una venta como en una recarga pagada con tarjeta—, y las
+         recargas salen del saldo MP completas, devolviendo su comisión. */
   const comTerminal   = comisionTerminal(c.tarjeta);
   const tarjetaNeto   = redondear(num(c.tarjeta) - comTerminal);
+  const comTerminalRec = comisionTerminal(recargaTarjeta);
+  const recargaTarjetaNeto = redondear(recargaTarjeta - comTerminalRec);
   const esperadoMp    = redondear(num(c.mpInicial) + num(c.transferencia) + tarjetaNeto
+                                  + recargaTarjetaNeto + recargaTransferencia
                                   - num(c.mpRetiros) - recargas + comisionRec
                                   - num(egr.mp) - num(envCta.mp) + tras.mp);
   const contadoMp     = redondear(num(c.mpCierre));
@@ -474,7 +495,7 @@ function calcularCuadre(fuente = null) {
         ['+ Ventas en efectivo',     num(c.ventaEfectivo), 'mas'],
         ['+ Cobro de fiados',        num(c.pagoCreditos),  'mas'],
         ['+ Otros ingresos',         num(c.otrosIngresos), 'mas'],
-        ['+ Recargas cobradas',      recargas,             'mas'],
+        ['+ Recargas cobradas en efectivo', recargaEfectivo, 'mas'],
         ...(efectivoEnvios ? [['+ Envíos cobrados en efectivo', efectivoEnvios, 'mas']] : []),
         ...(num(envCta.caja) ? [['− Enviado desde la caja', -num(envCta.caja), 'menos']] : []),
         ['− Pagos desde la caja',    -num(egr.caja),       'menos'],
@@ -491,8 +512,10 @@ function calcularCuadre(fuente = null) {
         ['Saldo inicial',                                       num(c.mpInicial),     'neutro'],
         ['+ Transferencias recibidas',                          num(c.transferencia), 'mas'],
         [`+ Tarjeta neta (−${fmtNum(CONFIG.comisionTerminalPct, 2)}% comisión)`, tarjetaNeto, 'mas'],
+        ...(recargaTarjeta ? [[`+ Recarga con tarjeta neta (−${fmtNum(CONFIG.comisionTerminalPct, 2)}% comisión)`, recargaTarjetaNeto, 'mas']] : []),
+        ...(recargaTransferencia ? [['+ Recarga por transferencia', recargaTransferencia, 'mas']] : []),
         ['+ Comisión devuelta por recargas',                    comisionRec,          'mas'],
-        ['− Recargas procesadas',                               -recargas,            'menos'],
+        ['− Recargas procesadas (compra de tiempo aire)',       -recargas,            'menos'],
         ['− Pagos desde Mercado Pago',                          -num(egr.mp),         'menos'],
         ...(num(envCta.mp) ? [['− Enviado a clientes', -num(envCta.mp), 'menos']] : []),
         ...(num(c.mpRetiros) ? [['− Retiros y pagos desde MP', -num(c.mpRetiros), 'menos']] : []),
@@ -543,6 +566,7 @@ function calcularCuadre(fuente = null) {
     esperadoCart, contadoCart, difCart,
     esperadoTC, contadoTC, difTC,
     comisionTerminal: comTerminal, tarjetaNeto,
+    recargaTarjetaNeto,
     totalFisico, totalDigital,
     totalValorizado: redondear(totalFisico + totalDigital),
     ventaTotal,
@@ -555,7 +579,7 @@ function pistasCaja(dif, c) {
   const p = [];
   if (dif < 0) {
     p.push('Revisa que hayas registrado todos los egresos y la dotación a cartera.');
-    if (num(c.totalRecargas) > 0) p.push('Confirma que las recargas se cobraron en efectivo.');
+    if (num(c.totalRecargas) > 0) p.push('Confirma el método con el que se cobró cada recarga: sólo la parte en efectivo entra aquí.');
     p.push('¿Aparece una venta que no reconoces, o que es de otro turno? Revísala abajo: se puede quitar de este turno sin cancelarla.');
     p.push('Vuelve a contar el efectivo: es el error más común.');
   } else {
@@ -609,7 +633,13 @@ function snapshotTurno() {
   const pagoCreditos    = redondear(pos.abonosEfectivo + num(m.pagoCreditos));
   const creditoClientes = redondear(pos.credito        + num(m.creditoClientes));
   const otrosIngresos   = sumaLista(TURNO.otrosIngresos);
-  const totalRecargas   = redondear(pos.recargas       + num(m.recargas));
+  // Total derivado de las tres formas de pago, no al revés, para que nunca
+  // se puedan desacomodar entre sí (ni al capturar a mano, ni al reabrir
+  // un corte para corregirlo).
+  const recargaEfectivo = redondear(pos.recargaEfectivo + num(m.recargas));
+  const recargaTarjeta  = redondear(pos.recargaTarjeta  + num(m.recargaTarjeta));
+  const recargaTransferencia = redondear(pos.recargaTransferencia + num(m.recargaTransferencia));
+  const totalRecargas   = redondear(recargaEfectivo + recargaTarjeta + recargaTransferencia);
 
   return {
     /* identificación */
@@ -629,9 +659,12 @@ function snapshotTurno() {
     // En edición se conservan las estadísticas del POS del corte original
     pos: TURNO.modoEdicion && TURNO.posOriginal ? TURNO.posOriginal : pos,
 
-    /* recargas */
+    /* recargas: el total no cambia según cómo pagó el cliente —la tienda
+       de todos modos compra el tiempo aire de su saldo MP—, pero hace
+       falta saber por método a qué cuenta entró lo que el cliente pagó. */
     totalRecargas,
     comisionRecargas: comisionPorRecargas(totalRecargas),
+    recargaEfectivo, recargaTarjeta, recargaTransferencia,
 
     /* envíos de dinero: lo transferido sale de tu cuenta y el efectivo
        —monto más comisión— entra a la caja */
@@ -891,7 +924,11 @@ async function editarCorte(id) {
       tarjeta:         num(corte.tarjeta),
       pagoCreditos:    num(corte.pagoCreditos),
       creditoClientes: num(corte.creditoClientes),
-      recargas:        num(corte.totalRecargas),
+      // Un corte de antes de que la recarga tuviera forma de pago no trae
+      // recargaEfectivo: se asume todo en efectivo, como siempre fue.
+      recargas:        num(corte.recargaEfectivo ?? corte.totalRecargas),
+      recargaTarjeta:  num(corte.recargaTarjeta),
+      recargaTransferencia: num(corte.recargaTransferencia),
     },
     modoEdicion: true,
     posOriginal: corte.pos || null,

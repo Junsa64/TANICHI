@@ -345,7 +345,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '41';
+const VERSION_APP = '42';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +353,9 @@ const VERSION_APP = '41';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '42': [
+    'Las recargas ya se pueden cobrar con tarjeta o transferencia, no sólo en efectivo. El corte reparte cada una a la cuenta correcta —la compra del tiempo aire sigue saliendo de Mercado Pago igual que siempre—.',
+  ],
   '41': [
     'Encontrada la causa real de la barra para deslizar: no era "la versión de mobil", era la barra de arriba (Historial, Novedades, tema) que no cabía en ventanas de ancho normal y empujaba toda la página de lado. Ahora se acomoda en dos filas si hace falta, en cualquier tamaño de ventana —no sólo en celular—, sin verse distinta a como se ve siempre.',
   ],

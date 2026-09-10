@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="41"/>
+<meta name="tanichi-version" content="42"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=41"/>
+<link rel="stylesheet" href="style.css?v=42"/>
 </head>
 <body>
 
@@ -1250,8 +1250,12 @@
                oninput="actualizarPreviewRecarga()"/></label>
       <label class="campo ancho"><span class="campo-lbl">Referencia <em>(opcional)</em></span>
         <input id="recarga-desc" class="input" list="dl-recargas" placeholder="Ej. Telcel 55 1234 5678"/></label>
+      <div class="campo ancho">
+        <span class="campo-lbl">¿Cómo te pagó el cliente?</span>
+        <div id="recarga-metodos" class="metodos"></div>
+      </div>
       <div class="resumen-lineas ancho">
-        <div class="rl"><span>Entra en efectivo a tu caja</span><strong id="recarga-efectivo" class="mono bueno">$0.00</strong></div>
+        <div class="rl"><span id="recarga-entra-lbl">Entra en efectivo a tu caja</span><strong id="recarga-efectivo" class="mono bueno">$0.00</strong></div>
         <div class="rl"><span>Comisión que te devuelve MP</span><strong id="recarga-comision" class="mono bueno">$0.00</strong></div>
         <div class="rl total"><span>Sale neto de tu saldo MP</span><strong id="recarga-neto" class="mono malo">$0.00</strong></div>
       </div>
@@ -1526,16 +1530,16 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=41"></script>
-<script src="js/iconos.js?v=41"></script>
-<script src="js/turno.js?v=41"></script>
-<script src="js/pos.js?v=41"></script>
-<script src="js/inventario.js?v=41"></script>
-<script src="js/corte.js?v=41"></script>
-<script src="js/historial.js?v=41"></script>
-<script src="js/reportes.js?v=41"></script>
-<script src="js/fotos.js?v=41"></script>
-<script src="js/fiados.js?v=41"></script>
-<script src="js/app.js?v=41"></script>
+<script src="js/core.js?v=42"></script>
+<script src="js/iconos.js?v=42"></script>
+<script src="js/turno.js?v=42"></script>
+<script src="js/pos.js?v=42"></script>
+<script src="js/inventario.js?v=42"></script>
+<script src="js/corte.js?v=42"></script>
+<script src="js/historial.js?v=42"></script>
+<script src="js/reportes.js?v=42"></script>
+<script src="js/fotos.js?v=42"></script>
+<script src="js/fiados.js?v=42"></script>
+<script src="js/app.js?v=42"></script>
 </body>
 </html>
