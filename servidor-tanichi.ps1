@@ -38,6 +38,64 @@ $TIPOS = @{
   '.txt'  = 'text/plain; charset=utf-8'
 }
 
+# ---------------------------------------------------- Mercado Pago (Point) --
+# El token vive SÓLO en esta computadora, en este archivo, que nunca se sube
+# al repositorio (ver .gitignore). El navegador nunca lo ve: le pide a este
+# servidor, y este servidor es quien de verdad llama a Mercado Pago.
+$MP_CRED_ARCHIVO = Join-Path $RAIZ 'mp-credenciales.json'
+
+function Leer-CredencialesMP {
+  if (Test-Path -LiteralPath $MP_CRED_ARCHIVO) {
+    try { return Get-Content -LiteralPath $MP_CRED_ARCHIVO -Raw | ConvertFrom-Json } catch { return $null }
+  }
+  return $null
+}
+
+function Responder-Json($res, $objeto, $codigo = 200) {
+  $json = $objeto | ConvertTo-Json -Depth 12 -Compress
+  $b = [System.Text.Encoding]::UTF8.GetBytes($json)
+  $res.StatusCode = $codigo
+  $res.ContentType = 'application/json; charset=utf-8'
+  $res.Headers.Add('Cache-Control', 'no-store')
+  $res.ContentLength64 = $b.Length
+  $res.OutputStream.Write($b, 0, $b.Length)
+  $res.Close()
+}
+
+function Leer-CuerpoJson($req) {
+  $lector = New-Object System.IO.StreamReader($req.InputStream, $req.ContentEncoding)
+  $texto = $lector.ReadToEnd()
+  if ([string]::IsNullOrWhiteSpace($texto)) { return $null }
+  return $texto | ConvertFrom-Json
+}
+
+# Llama a la API real de Mercado Pago. Si algo sale mal, intenta rescatar el
+# mensaje de error que manda Mercado Pago (no sólo "error 400").
+function Invocar-MP {
+  param([string]$Metodo, [string]$Ruta, [string]$Token, $Cuerpo = $null, [string]$IdempotencyKey = $null)
+  $headers = @{ 'Authorization' = "Bearer $Token" }
+  if ($IdempotencyKey) { $headers['X-Idempotency-Key'] = $IdempotencyKey }
+  $uri = "https://api.mercadopago.com$Ruta"
+  try {
+    if ($null -ne $Cuerpo) {
+      $json = $Cuerpo | ConvertTo-Json -Depth 12
+      return Invoke-RestMethod -Method $Metodo -Uri $uri -Headers $headers -ContentType 'application/json' -Body $json -TimeoutSec 20
+    } else {
+      return Invoke-RestMethod -Method $Metodo -Uri $uri -Headers $headers -ContentType 'application/json' -TimeoutSec 20
+    }
+  } catch {
+    $cuerpoError = $null
+    if ($_.Exception.Response) {
+      try {
+        $stream = $_.Exception.Response.GetResponseStream()
+        $lector = New-Object System.IO.StreamReader($stream)
+        $cuerpoError = $lector.ReadToEnd()
+      } catch { }
+    }
+    if ($cuerpoError) { throw $cuerpoError } else { throw $_.Exception.Message }
+  }
+}
+
 $escucha = New-Object System.Net.HttpListener
 $escucha.Prefixes.Add("http://localhost:$PUERTO/")
 
@@ -114,6 +172,112 @@ while ($escucha.IsListening) {
       $res.Close()
       continue
     }
+
+    # -------------------------------------------------- Mercado Pago (Point)
+    if ($rel -eq '__mp/estado') {
+      $cred = Leer-CredencialesMP
+      $configurado = [bool]($cred -and $cred.accessToken)
+      Responder-Json $res @{
+        configurado = $configurado
+        storeId = $(if ($cred) { [string]$cred.storeId } else { '' })
+        posId   = $(if ($cred) { [string]$cred.posId }   else { '' })
+      }
+      continue
+    }
+
+    if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/guardar') {
+      try {
+        $datos = Leer-CuerpoJson $req
+        $obj = [ordered]@{
+          accessToken = [string]$datos.accessToken
+          storeId     = [string]$datos.storeId
+          posId       = [string]$datos.posId
+        }
+        $obj | ConvertTo-Json | Set-Content -LiteralPath $MP_CRED_ARCHIVO -Encoding UTF8
+        Responder-Json $res @{ ok = $true }
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 500
+      }
+      continue
+    }
+
+    if ($rel -eq '__mp/terminales') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      try {
+        $q = '?limit=50'
+        if ($cred.storeId) { $q += "&store_id=$($cred.storeId)" }
+        if ($cred.posId)   { $q += "&pos_id=$($cred.posId)" }
+        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/point/integration-api/devices$q" -Token $cred.accessToken)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/cobrar') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      try {
+        $datos = Leer-CuerpoJson $req
+        $monto = [decimal]$datos.monto
+        $montoTxt = $monto.ToString('0.00', [System.Globalization.CultureInfo]::InvariantCulture)
+        $cuerpo = @{
+          type = 'point'
+          external_reference = 'tanichi_' + [guid]::NewGuid().ToString('N').Substring(0, 16)
+          expiration_time = 'PT10M'
+          transactions = @{ payments = @(@{ amount = $montoTxt }) }
+          config = @{ point = @{ terminal_id = [string]$datos.terminalId; print_on_terminal = 'no_ticket' } }
+        }
+        Responder-Json $res (Invocar-MP -Metodo POST -Ruta '/v1/orders' -Token $cred.accessToken -Cuerpo $cuerpo -IdempotencyKey ([guid]::NewGuid().ToString()))
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($rel -eq '__mp/orden') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      $ordenId = $req.QueryString['id']
+      if (-not $ordenId) { Responder-Json $res @{ error = 'Falta el id de la orden.' } 400; continue }
+      try {
+        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/orders/$ordenId" -Token $cred.accessToken)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/cancelar') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      $ordenId = $req.QueryString['id']
+      try {
+        Invocar-MP -Metodo POST -Ruta "/v1/orders/$ordenId/cancel" -Token $cred.accessToken | Out-Null
+        Responder-Json $res @{ ok = $true }
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($rel -eq '__mp/movimientos') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      try {
+        $desde = $req.QueryString['desde']
+        $hasta = $req.QueryString['hasta']
+        $q = '?sort=date_created&criteria=desc&range=date_created&limit=200'
+        if ($desde) { $q += '&begin_date=' + [Uri]::EscapeDataString($desde + 'T00:00:00.000-06:00') }
+        if ($hasta) { $q += '&end_date='   + [Uri]::EscapeDataString($hasta + 'T23:59:59.999-06:00') }
+        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/payments/search$q" -Token $cred.accessToken)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
     $archivo = [System.IO.Path]::GetFullPath((Join-Path $RAIZ $rel))
 
     # Nadie sale de la carpeta de la app

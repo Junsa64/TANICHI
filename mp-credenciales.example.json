@@ -1,0 +1,6 @@
+{
+  "_leeme": "Copia este archivo como mp-credenciales.json (sin '.example') y pon ahí tu Access Token real. Ese archivo NUNCA se sube a GitHub —está en .gitignore—. También puedes llenarlo desde Ajustes en la app, que hace exactamente esto por ti.",
+  "accessToken": "",
+  "storeId": "",
+  "posId": ""
+}

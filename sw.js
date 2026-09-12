@@ -8,7 +8,7 @@
    almacenamiento del navegador. Esto sólo guarda el programa.
    ========================================================================== */
 
-const CACHE = 'tanichi-v42';
+const CACHE = 'tanichi-v43';
 
 /* Todo lo que hace falta para arrancar a oscuras. */
 const ARCHIVOS = [
@@ -29,6 +29,7 @@ const ARCHIVOS = [
   './js/reportes.js',
   './js/fotos.js',
   './js/fiados.js',
+  './js/mercadopago.js',
   './js/app.js',
 ];
 

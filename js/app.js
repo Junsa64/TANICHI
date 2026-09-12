@@ -129,6 +129,7 @@ function renderAjustes() {
   renderEstadoRespaldo();
   renderAjustesFotos();
   renderEstadoInstalacion();
+  renderEstadoMP();
   setText('aj-version', VERSION_APP);
   // Qué carpeta está sirviendo: delata un servidor viejo de otra carpeta.
   // El mismo aviso confirma que hay servidor local: sólo entonces se puede
@@ -345,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '42';
+const VERSION_APP = '43';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -353,6 +354,9 @@ const VERSION_APP = '42';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '43': [
+    'Nuevo: conectar tu terminal de Mercado Pago desde Ajustes. Una vez conectada, puedes mandarle el cobro con tarjeta directo desde el punto de venta (sin teclear el monto en la terminal), y ver tus cobros reales del día en Corte de caja → Saldos. El Access Token se guarda sólo en esta computadora, nunca se sube a ningún lado; sólo funciona abriendo la app con el servidor local.',
+  ],
   '42': [
     'Las recargas ya se pueden cobrar con tarjeta o transferencia, no sólo en efectivo. El corte reparte cada una a la cuenta correcta —la compra del tiempo aire sigue saliendo de Mercado Pago igual que siempre—.',
   ],

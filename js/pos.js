@@ -1046,6 +1046,17 @@ function renderCobro() {
       : 'Cambio a entregar al cliente');
   }
 
+  /* tarjeta: ofrece mandar el cobro a la terminal de Mercado Pago */
+  const tar = c.pagos.find(p => p.metodo === 'tarjeta');
+  show('cobro-tarjeta-mp', !!tar, 'block');
+  if (tar) {
+    setText('cobro-tarjeta-mp-monto', fmt(tar.monto));
+    setText('cobro-tarjeta-mp-estado', tar.confirmadoTerminal
+      ? '✓ Confirmado por la terminal.' : '');
+    const btn = document.getElementById('btn-cobrar-terminal-mp');
+    if (btn) btn.disabled = !!tar.confirmadoTerminal;
+  }
+
   /* Cliente: obligatorio si algo queda a crédito, y también en un abono
      (sin nombre no hay a qué cuenta aplicarlo). */
   const hayCredito = c.pagos.some(p => p.metodo === 'credito' && num(p.monto) > 0);

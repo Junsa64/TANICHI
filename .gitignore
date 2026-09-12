@@ -3,6 +3,10 @@
 catalogo_tanichi.csv
 respaldo-catalogo-978.json
 
+# Credenciales de Mercado Pago: nunca al repositorio ni al Artifact.
+# Vive sólo en esta computadora. Ver mp-credenciales.example.json.
+mp-credenciales.json
+
 # Paquete generado por construir-artifact.js
 dist/
 

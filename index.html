@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="42"/>
+<meta name="tanichi-version" content="43"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=42"/>
+<link rel="stylesheet" href="style.css?v=43"/>
 </head>
 <body>
 
@@ -562,6 +562,9 @@
             <strong id="sal-mp-esperado" class="cifra-media mono">$0.00</strong>
             <span id="sal-mp-dif" class="dif-chip">$0.00</span>
           </div>
+          <button type="button" class="btn btn-ghost compacto ancho" onclick="consultarMovimientosMPSaldos()">
+            <span data-ico="telefono"></span> Ver mis cobros reales de hoy en Mercado Pago</button>
+          <div id="sal-mp-movimientos" class="hint ancho"></div>
         </div>
       </div>
 
@@ -815,6 +818,29 @@
     </div>
 
     <div class="tarjeta">
+      <div class="tarjeta-head"><span class="ico"><span data-ico="telefono"></span></span><h2>Terminal de Mercado Pago</h2></div>
+      <div class="tarjeta-body campos">
+        <p class="hint ancho">Conecta tu terminal Point para cobrar con tarjeta directo desde el punto de
+          venta —sin teclear el monto en la terminal— y para traer tus movimientos reales de Mercado Pago.
+          El Access Token se guarda <strong>sólo en esta computadora</strong>, nunca se sube a ningún lado.
+          Sólo funciona abriendo la app con el servidor local (TANICHI.bat).</p>
+        <div id="mp-estado" class="hint ancho">Revisando…</div>
+        <label class="campo ancho"><span class="campo-lbl">Access Token</span>
+          <input id="mp-token" type="password" class="input" placeholder="APP_USR-…" autocomplete="off"/>
+          <span class="hint">Lo consigues en developers.mercadopago.com.mx, en tu panel de credenciales de producción.</span></label>
+        <label class="campo"><span class="campo-lbl">Store ID <em>(opcional)</em></span>
+          <input id="mp-store" class="input mono" placeholder="Si tienes varias sucursales"/></label>
+        <label class="campo"><span class="campo-lbl">POS ID <em>(opcional)</em></span>
+          <input id="mp-pos" class="input mono" placeholder="Si tienes varias cajas"/></label>
+        <div id="mp-terminales" class="hint ancho"></div>
+      </div>
+      <div class="tarjeta-pie">
+        <button class="btn btn-ghost" onclick="probarConexionMP()">Probar conexión</button>
+        <button class="btn btn-primary" onclick="guardarCredencialesMP()">Guardar y conectar</button>
+      </div>
+    </div>
+
+    <div class="tarjeta">
       <div class="tarjeta-head"><span class="ico"><span data-ico="personas"></span></span><h2>Responsables</h2>
         <button class="btn btn-ghost compacto" onclick="agregarCajero()">+ Agregar</button></div>
       <div class="tarjeta-body"><div id="cfg-cajeros" class="conceptos"></div></div>
@@ -959,6 +985,13 @@
         </div>
       </div>
 
+      <div id="cobro-tarjeta-mp" class="cobro-efectivo" style="display:none">
+        <button type="button" id="btn-cobrar-terminal-mp" class="btn btn-primary" style="width:100%" onclick="iniciarCobroTerminalMP()">
+          <span data-ico="telefono"></span> Cobrar <span id="cobro-tarjeta-mp-monto"></span> en la terminal
+        </button>
+        <p id="cobro-tarjeta-mp-estado" class="hint"></p>
+      </div>
+
       <label id="cobro-cliente-wrap" class="campo" style="display:none">
         <span class="campo-lbl" id="cobro-cliente-lbl">¿Quién se lleva fiado?</span>
         <input class="input" list="dl-clientes" placeholder="Nombre del cliente" oninput="fijarCliente(this.value)"/>
@@ -970,6 +1003,20 @@
     <div class="modal-pie">
       <button class="btn btn-ghost" onclick="cerrarModal('modal-cobro')">Cancelar</button>
       <button id="btn-confirmar-cobro" class="btn btn-primary grande" onclick="confirmarCobro()"><span data-ico="palomita"></span> Confirmar cobro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Espera de cobro en la terminal de Mercado Pago -->
+<div id="modal-espera-mp" class="modal-overlay">
+  <div class="modal angosto">
+    <div class="modal-head"><h2><span data-ico="telefono"></span> Cobrando en la terminal</h2></div>
+    <div class="modal-body" style="text-align:center">
+      <p>Esperando a que se pase la tarjeta por <strong id="espera-mp-monto">$0.00</strong>…</p>
+      <p class="hint">No cierres esta ventana. Puedes cancelar si te equivocaste de monto.</p>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-ghost" onclick="cancelarEsperaMP()">Cancelar cobro</button>
     </div>
   </div>
 </div>
@@ -1530,16 +1577,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=42"></script>
-<script src="js/iconos.js?v=42"></script>
-<script src="js/turno.js?v=42"></script>
-<script src="js/pos.js?v=42"></script>
-<script src="js/inventario.js?v=42"></script>
-<script src="js/corte.js?v=42"></script>
-<script src="js/historial.js?v=42"></script>
-<script src="js/reportes.js?v=42"></script>
-<script src="js/fotos.js?v=42"></script>
-<script src="js/fiados.js?v=42"></script>
-<script src="js/app.js?v=42"></script>
+<script src="js/core.js?v=43"></script>
+<script src="js/iconos.js?v=43"></script>
+<script src="js/turno.js?v=43"></script>
+<script src="js/pos.js?v=43"></script>
+<script src="js/inventario.js?v=43"></script>
+<script src="js/corte.js?v=43"></script>
+<script src="js/historial.js?v=43"></script>
+<script src="js/reportes.js?v=43"></script>
+<script src="js/fotos.js?v=43"></script>
+<script src="js/fiados.js?v=43"></script>
+<script src="js/mercadopago.js?v=43"></script>
+<script src="js/app.js?v=43"></script>
 </body>
 </html>
