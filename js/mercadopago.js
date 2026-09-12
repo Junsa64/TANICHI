@@ -221,3 +221,79 @@ async function consultarMovimientosMPSaldos() {
     cont.innerHTML = `<span class="malo">${esc(e.message)}</span>`;
   }
 }
+
+/* ------------------------------------------------- reporte de cuenta
+   Retiros, liquidaciones y demás: Mercado Pago arma este reporte de fondo
+   —no es instantáneo como buscar pagos—, así que hay que pedirlo y
+   preguntar cada rato si ya está listo, hasta descargarlo.            */
+async function traerReporteMP(desdeISO, hastaISO) {
+  const creado = await llamarMP('__mp/reporte/crear', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ desde: desdeISO, hasta: hastaISO }),
+  });
+  const id = creado.report_id || creado.id;
+  if (!id) throw new Error('Mercado Pago no devolvió un identificador de reporte.');
+
+  const empezo = Date.now();
+  while (Date.now() - empezo < 2 * 60 * 1000) {
+    await new Promise(r => setTimeout(r, 4000));
+    const estado = await llamarMP('__mp/reporte/estado?id=' + encodeURIComponent(id));
+    const rep = (estado.results || [])[0];
+    if (rep && rep.status === 'processed' && rep.file_name) {
+      const descarga = await llamarMP('__mp/reporte/descargar?archivo=' + encodeURIComponent(rep.file_name));
+      return descarga.movimientos || [];
+    }
+  }
+  throw new Error('El reporte de Mercado Pago tardó demasiado. Intenta otra vez en un momento.');
+}
+
+/** Un renglón del reporte trae muchas columnas; estas dos son las únicas
+    que hacen falta, y su nombre puede variar mayúsculas/minúsculas. */
+function tipoMovimientoMP(fila) { return fila.TRANSACTION_TYPE || fila.transaction_type || '?'; }
+function montoMovimientoMP(fila) {
+  const v = fila.SETTLEMENT_NET_AMOUNT ?? fila.settlement_net_amount ?? fila.TRANSACTION_AMOUNT ?? fila.transaction_amount;
+  return Math.abs(num(v));
+}
+
+const NOMBRES_MOVIMIENTO_MP = {
+  SETTLEMENT: 'Cobros', REFUND: 'Reembolsos', CHARGEBACK: 'Contracargos',
+  DISPUTE: 'Disputas', WITHDRAWAL: 'Retiros', WITHDRAWAL_CANCEL: 'Retiros cancelados', PAYOUT: 'Retiros',
+};
+
+/** Botón de Corte de caja → Saldos: trae TODOS los movimientos reales del
+    día —incluidos los retiros—, para no tener que anotarlos a mano. */
+async function consultarReporteMPSaldos() {
+  const cont = document.getElementById('sal-mp-reporte');
+  if (!cont) return;
+  cont.textContent = 'Generando tu reporte de Mercado Pago… puede tardar un minuto.';
+  try {
+    const fecha = TURNO.fecha || hoyISO();
+    const filas = await traerReporteMP(`${fecha}T00:00:00Z`, `${fecha}T23:59:59Z`);
+    if (!filas.length) {
+      cont.textContent = `Mercado Pago no registra movimientos de cuenta el ${fecha}.`;
+      return;
+    }
+    const grupos = new Map();
+    filas.forEach(f => {
+      const t = tipoMovimientoMP(f);
+      grupos.set(t, redondear((grupos.get(t) || 0) + montoMovimientoMP(f)));
+    });
+    const retiros = redondear((grupos.get('WITHDRAWAL') || 0) + (grupos.get('PAYOUT') || 0));
+
+    cont.innerHTML = '<ul class="lista-dif">' + [...grupos.entries()].map(([t, v]) =>
+      `<li>${esc(NOMBRES_MOVIMIENTO_MP[t] || t)}: ${fmt(v)}</li>`).join('') + '</ul>' +
+      (retiros ? `<button class="link" onclick="usarRetiroDetectadoMP(${retiros})">Usar ${fmt(retiros)} como "Retiros o pagos hechos desde MP"</button>` : '');
+  } catch (e) {
+    cont.innerHTML = `<span class="malo">${esc(e.message)}</span>`;
+  }
+}
+
+function usarRetiroDetectadoMP(monto) {
+  TURNO.mpRetiros = monto;
+  setVal('sal-mp-retiros', monto);
+  guardarTurno();
+  renderPanelSaldos();
+  actualizarBadgeCuadre();
+  toast('Retiros actualizados desde Mercado Pago.', 'success');
+}

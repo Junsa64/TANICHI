@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '43';
+const VERSION_APP = '44';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '43';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '44': [
+    'En Corte de caja → Saldos, nuevo botón para traer los retiros y demás movimientos de cuenta del día directo de Mercado Pago —no sólo los cobros—, con un botón para usar el total de retiros detectado sin escribirlo a mano. Genera un reporte de Mercado Pago y puede tardar hasta un minuto.',
+  ],
   '43': [
     'Nuevo: conectar tu terminal de Mercado Pago desde Ajustes. Una vez conectada, puedes mandarle el cobro con tarjeta directo desde el punto de venta (sin teclear el monto en la terminal), y ver tus cobros reales del día en Corte de caja → Saldos. El Access Token se guarda sólo en esta computadora, nunca se sube a ningún lado; sólo funciona abriendo la app con el servidor local.',
   ],

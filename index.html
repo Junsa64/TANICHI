@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="43"/>
+<meta name="tanichi-version" content="44"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=43"/>
+<link rel="stylesheet" href="style.css?v=44"/>
 </head>
 <body>
 
@@ -565,6 +565,9 @@
           <button type="button" class="btn btn-ghost compacto ancho" onclick="consultarMovimientosMPSaldos()">
             <span data-ico="telefono"></span> Ver mis cobros reales de hoy en Mercado Pago</button>
           <div id="sal-mp-movimientos" class="hint ancho"></div>
+          <button type="button" class="btn btn-ghost compacto ancho" onclick="consultarReporteMPSaldos()">
+            <span data-ico="telefono"></span> Traer retiros y movimientos de hoy (puede tardar un minuto)</button>
+          <div id="sal-mp-reporte" class="hint ancho"></div>
         </div>
       </div>
 
@@ -1577,17 +1580,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=43"></script>
-<script src="js/iconos.js?v=43"></script>
-<script src="js/turno.js?v=43"></script>
-<script src="js/pos.js?v=43"></script>
-<script src="js/inventario.js?v=43"></script>
-<script src="js/corte.js?v=43"></script>
-<script src="js/historial.js?v=43"></script>
-<script src="js/reportes.js?v=43"></script>
-<script src="js/fotos.js?v=43"></script>
-<script src="js/fiados.js?v=43"></script>
-<script src="js/mercadopago.js?v=43"></script>
-<script src="js/app.js?v=43"></script>
+<script src="js/core.js?v=44"></script>
+<script src="js/iconos.js?v=44"></script>
+<script src="js/turno.js?v=44"></script>
+<script src="js/pos.js?v=44"></script>
+<script src="js/inventario.js?v=44"></script>
+<script src="js/corte.js?v=44"></script>
+<script src="js/historial.js?v=44"></script>
+<script src="js/reportes.js?v=44"></script>
+<script src="js/fotos.js?v=44"></script>
+<script src="js/fiados.js?v=44"></script>
+<script src="js/mercadopago.js?v=44"></script>
+<script src="js/app.js?v=44"></script>
 </body>
 </html>

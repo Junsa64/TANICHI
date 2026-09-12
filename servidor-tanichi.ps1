@@ -96,6 +96,37 @@ function Invocar-MP {
   }
 }
 
+# Los reportes de Mercado Pago (retiros, liquidaciones, etc.) se descargan
+# como texto CSV, no como JSON: Invoke-RestMethod los rompería intentando
+# interpretarlos. Éste trae el texto tal cual.
+function Invocar-MP-Texto {
+  param([string]$Ruta, [string]$Token)
+  $headers = @{ 'Authorization' = "Bearer $Token" }
+  $uri = "https://api.mercadopago.com$Ruta"
+  try {
+    return Invoke-WebRequest -Method GET -Uri $uri -Headers $headers -TimeoutSec 30 -UseBasicParsing | Select-Object -ExpandProperty Content
+  } catch {
+    $cuerpoError = $null
+    if ($_.Exception.Response) {
+      try {
+        $stream = $_.Exception.Response.GetResponseStream()
+        $lector = New-Object System.IO.StreamReader($stream)
+        $cuerpoError = $lector.ReadToEnd()
+      } catch { }
+    }
+    if ($cuerpoError) { throw $cuerpoError } else { throw $_.Exception.Message }
+  }
+}
+
+# El CSV de Mercado Pago puede venir con "," o ";" según la cuenta: se
+# adivina viendo cuál aparece más veces en el encabezado.
+function ConvertirCsvMP([string]$Texto) {
+  $primeraLinea = ($Texto -split "`r?`n")[0]
+  $delimitador = if (($primeraLinea.ToCharArray() | Where-Object { $_ -eq ';' }).Count -gt
+                     ($primeraLinea.ToCharArray() | Where-Object { $_ -eq ',' }).Count) { ';' } else { ',' }
+  return $Texto | ConvertFrom-Csv -Delimiter $delimitador
+}
+
 $escucha = New-Object System.Net.HttpListener
 $escucha.Prefixes.Add("http://localhost:$PUERTO/")
 
@@ -272,6 +303,55 @@ while ($escucha.IsListening) {
         if ($desde) { $q += '&begin_date=' + [Uri]::EscapeDataString($desde + 'T00:00:00.000-06:00') }
         if ($hasta) { $q += '&end_date='   + [Uri]::EscapeDataString($hasta + 'T23:59:59.999-06:00') }
         Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/payments/search$q" -Token $cred.accessToken)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    # ------------------------------------ reporte de cuenta (retiros, etc.)
+    # Mercado Pago arma este reporte de fondo: se pide, se pregunta cada
+    # rato si ya está, y hasta entonces se descarga. Cada llamada de éstas
+    # es rápida —quien espera es el navegador, preguntando varias veces—,
+    # así nunca se detiene este servidor esperando un reporte.
+    if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/reporte/crear') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      try {
+        $datos = Leer-CuerpoJson $req
+        # Que el reporte sí incluya retiros: es un ajuste de la cuenta, no
+        # de este reporte en particular, pero no cuesta nada asegurarlo cada vez.
+        try { Invocar-MP -Metodo PUT -Ruta '/v1/account/settlement_report/config' -Token $cred.accessToken -Cuerpo @{ include_withdraw = $true } | Out-Null } catch { }
+        $cuerpo = @{ begin_date = [string]$datos.desde; end_date = [string]$datos.hasta }
+        Responder-Json $res (Invocar-MP -Metodo POST -Ruta '/v1/account/settlement_report' -Token $cred.accessToken -Cuerpo $cuerpo)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($rel -eq '__mp/reporte/estado') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      $id = $req.QueryString['id']
+      if (-not $id) { Responder-Json $res @{ error = 'Falta el id del reporte.' } 400; continue }
+      try {
+        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/account/settlement_report/search?id=$id" -Token $cred.accessToken)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
+    if ($rel -eq '__mp/reporte/descargar') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      $archivoReporte = $req.QueryString['archivo']
+      if (-not $archivoReporte) { Responder-Json $res @{ error = 'Falta el nombre del archivo.' } 400; continue }
+      try {
+        $texto = Invocar-MP-Texto -Ruta "/v1/account/settlement_report/$archivoReporte" -Token $cred.accessToken
+        $filas = ConvertirCsvMP $texto
+        Responder-Json $res @{ movimientos = $filas }
       } catch {
         Responder-Json $res @{ error = $_.Exception.Message } 502
       }
