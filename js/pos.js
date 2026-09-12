@@ -1052,9 +1052,13 @@ function renderCobro() {
   if (tar) {
     setText('cobro-tarjeta-mp-monto', fmt(tar.monto));
     setText('cobro-tarjeta-mp-estado', tar.confirmadoTerminal
-      ? '✓ Confirmado por la terminal.' : '');
+      ? '✓ Confirmado por la terminal.'
+      : tar.requiereConfirmacionManual
+        ? '⚠ Mercado Pago no pudo confirmar sola. Mira la pantalla de la terminal: si dice "aprobado", da clic abajo.'
+        : '');
     const btn = document.getElementById('btn-cobrar-terminal-mp');
     if (btn) btn.disabled = !!tar.confirmadoTerminal;
+    show('btn-confirmar-terminal-manual', !!tar.requiereConfirmacionManual && !tar.confirmadoTerminal, 'block');
   }
 
   /* Cliente: obligatorio si algo queda a crédito, y también en un abono

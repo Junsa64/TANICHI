@@ -133,7 +133,23 @@ async function cobrarConTerminalMP(monto) {
         resolve(estado);
         return;
       }
-      if (status === 'cancelled' || status === 'expired') {
+      if (status === 'action_required') {
+        // Mercado Pago avisa que este estatus ya no cambia solo: hay que
+        // ver la pantalla de la terminal para saber si de verdad se cobró.
+        ocultarEsperaMP();
+        MP_COBRO_ACTIVO = null;
+        toast('Mercado Pago no puede confirmar sola. Revisa la pantalla de la terminal.', 'warn', 8000);
+        resolve('accion_requerida');
+        return;
+      }
+      if (status === 'failed') {
+        ocultarEsperaMP();
+        MP_COBRO_ACTIVO = null;
+        toast('La terminal marcó el cobro como fallido. Intenta de nuevo.', 'error', 7000);
+        resolve(null);
+        return;
+      }
+      if (status === 'canceled' || status === 'expired') {
         ocultarEsperaMP();
         MP_COBRO_ACTIVO = null;
         toast('El cobro no se completó en la terminal.', 'warn', 6000);
@@ -167,9 +183,26 @@ async function iniciarCobroTerminalMP() {
 
   const btn = document.getElementById('btn-cobrar-terminal-mp');
   if (btn) btn.disabled = true;
+  tar.requiereConfirmacionManual = false;
   const resultado = await cobrarConTerminalMP(num(tar.monto));
-  if (resultado) tar.confirmadoTerminal = true;
+  if (resultado === 'accion_requerida') {
+    tar.requiereConfirmacionManual = true;
+  } else if (resultado) {
+    tar.confirmadoTerminal = true;
+  }
   if (btn) btn.disabled = !!(tar && tar.confirmadoTerminal);
+  renderCobro();
+}
+
+/** Botón "Ya se cobró en la terminal": para cuando Mercado Pago avisa que
+    ya no puede confirmar sola (estatus action_required) y hay que fiarse
+    de lo que la pantalla de la terminal muestra. */
+function confirmarCobroTerminalManual() {
+  const c = POS.cobro;
+  const tar = c && c.pagos.find(p => p.metodo === 'tarjeta');
+  if (!tar) return;
+  tar.confirmadoTerminal = true;
+  tar.requiereConfirmacionManual = false;
   renderCobro();
 }
 
@@ -261,8 +294,17 @@ const NOMBRES_MOVIMIENTO_MP = {
   DISPUTE: 'Disputas', WITHDRAWAL: 'Retiros', WITHDRAWAL_CANCEL: 'Retiros cancelados', PAYOUT: 'Retiros',
 };
 
+/* Para calcular el saldo de cierre solo, sumando lo que de verdad entra y
+   sale de la cuenta. "Disputas" no se suma: mientras no se resuelve —y se
+   vuelve reembolso o contracargo— el dinero sigue reservado, no perdido. */
+const SIGNO_MOVIMIENTO_MP = {
+  SETTLEMENT: 1, REFUND: -1, CHARGEBACK: -1,
+  WITHDRAWAL: -1, WITHDRAWAL_CANCEL: 1, PAYOUT: -1,
+};
+
 /** Botón de Corte de caja → Saldos: trae TODOS los movimientos reales del
-    día —incluidos los retiros—, para no tener que anotarlos a mano. */
+    día —incluidos los retiros—, calcula solo cuánto deberías tener y ofrece
+    llenar los dos campos de golpe, para no tener que anotar nada a mano. */
 async function consultarReporteMPSaldos() {
   const cont = document.getElementById('sal-mp-reporte');
   if (!cont) return;
@@ -275,25 +317,34 @@ async function consultarReporteMPSaldos() {
       return;
     }
     const grupos = new Map();
+    let neto = 0;
     filas.forEach(f => {
       const t = tipoMovimientoMP(f);
-      grupos.set(t, redondear((grupos.get(t) || 0) + montoMovimientoMP(f)));
+      const monto = montoMovimientoMP(f);
+      grupos.set(t, redondear((grupos.get(t) || 0) + monto));
+      const signo = SIGNO_MOVIMIENTO_MP[t];
+      if (signo) neto = redondear(neto + signo * monto);
     });
-    const retiros = redondear((grupos.get('WITHDRAWAL') || 0) + (grupos.get('PAYOUT') || 0));
+    const retiros = redondear((grupos.get('WITHDRAWAL') || 0) + (grupos.get('PAYOUT') || 0)
+      - (grupos.get('WITHDRAWAL_CANCEL') || 0));
+    const cierre = redondear(num(TURNO.mpInicial) + neto);
 
     cont.innerHTML = '<ul class="lista-dif">' + [...grupos.entries()].map(([t, v]) =>
       `<li>${esc(NOMBRES_MOVIMIENTO_MP[t] || t)}: ${fmt(v)}</li>`).join('') + '</ul>' +
-      (retiros ? `<button class="link" onclick="usarRetiroDetectadoMP(${retiros})">Usar ${fmt(retiros)} como "Retiros o pagos hechos desde MP"</button>` : '');
+      `<button class="link" onclick="usarDatosDetectadosMP(${retiros}, ${cierre})">` +
+      `Usar estos datos: retiros ${fmt(retiros)} y saldo de cierre ${fmt(cierre)}</button>`;
   } catch (e) {
     cont.innerHTML = `<span class="malo">${esc(e.message)}</span>`;
   }
 }
 
-function usarRetiroDetectadoMP(monto) {
-  TURNO.mpRetiros = monto;
-  setVal('sal-mp-retiros', monto);
+function usarDatosDetectadosMP(retiros, cierre) {
+  TURNO.mpRetiros = retiros;
+  TURNO.mpCierre = cierre;
+  setVal('sal-mp-retiros', retiros);
+  setVal('sal-mp-cierre', cierre);
   guardarTurno();
   renderPanelSaldos();
   actualizarBadgeCuadre();
-  toast('Retiros actualizados desde Mercado Pago.', 'success');
+  toast('Retiros y saldo de cierre llenados desde Mercado Pago.', 'success');
 }

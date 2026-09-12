@@ -366,6 +366,10 @@ body.compacta .encabezado-vista p { display: none; }
 .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .campo.ancho { grid-column: 1 / -1; }
+/* `.ancho` también debe abarcar todo el ancho en botones, avisos y el
+   bloque "Deberías tener" dentro de una rejilla de `.campos` —si no,
+   quedan encimados a la mitad junto al siguiente elemento. */
+.campos > .objetivo.ancho, .campos > .btn.ancho, .campos > .hint.ancho { grid-column: 1 / -1; }
 .campo-lbl, .mini-lbl {
   font-size: 11px; font-weight: 800; color: var(--gris);
   text-transform: uppercase; letter-spacing: .14em;

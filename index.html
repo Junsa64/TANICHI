@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="44"/>
+<meta name="tanichi-version" content="45"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=44"/>
+<link rel="stylesheet" href="style.css?v=45"/>
 </head>
 <body>
 
@@ -993,6 +993,9 @@
           <span data-ico="telefono"></span> Cobrar <span id="cobro-tarjeta-mp-monto"></span> en la terminal
         </button>
         <p id="cobro-tarjeta-mp-estado" class="hint"></p>
+        <button type="button" id="btn-confirmar-terminal-manual" class="btn btn-ghost" style="width:100%; display:none" onclick="confirmarCobroTerminalManual()">
+          Ya se cobró en la terminal
+        </button>
       </div>
 
       <label id="cobro-cliente-wrap" class="campo" style="display:none">
@@ -1580,17 +1583,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=44"></script>
-<script src="js/iconos.js?v=44"></script>
-<script src="js/turno.js?v=44"></script>
-<script src="js/pos.js?v=44"></script>
-<script src="js/inventario.js?v=44"></script>
-<script src="js/corte.js?v=44"></script>
-<script src="js/historial.js?v=44"></script>
-<script src="js/reportes.js?v=44"></script>
-<script src="js/fotos.js?v=44"></script>
-<script src="js/fiados.js?v=44"></script>
-<script src="js/mercadopago.js?v=44"></script>
-<script src="js/app.js?v=44"></script>
+<script src="js/core.js?v=45"></script>
+<script src="js/iconos.js?v=45"></script>
+<script src="js/turno.js?v=45"></script>
+<script src="js/pos.js?v=45"></script>
+<script src="js/inventario.js?v=45"></script>
+<script src="js/corte.js?v=45"></script>
+<script src="js/historial.js?v=45"></script>
+<script src="js/reportes.js?v=45"></script>
+<script src="js/fotos.js?v=45"></script>
+<script src="js/fiados.js?v=45"></script>
+<script src="js/mercadopago.js?v=45"></script>
+<script src="js/app.js?v=45"></script>
 </body>
 </html>

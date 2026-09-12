@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '44';
+const VERSION_APP = '45';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,11 @@ const VERSION_APP = '44';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '45': [
+    'Corregido: el cobro con tarjeta en la terminal se podía quedar esperando para siempre. Mercado Pago a veces avisa que ya no puede confirmar sola (por ejemplo si tarda en reaccionar) y hay que revisar la pantalla de la terminal a mano —ahora la app lo detecta y muestra un botón "Ya se cobró en la terminal" para esos casos, en vez de quedarse pegada.',
+    'Corregido: en Corte de caja → Saldos, los botones de Mercado Pago se veían encimados con el recuadro de "Deberías tener".',
+    'El botón para traer los movimientos de Mercado Pago ahora también calcula solo el saldo de cierre —no sólo los retiros— y llena los dos campos de un jalón, así casi nunca hace falta escribir nada a mano en esa tarjeta.',
+  ],
   '44': [
     'En Corte de caja → Saldos, nuevo botón para traer los retiros y demás movimientos de cuenta del día directo de Mercado Pago —no sólo los cobros—, con un botón para usar el total de retiros detectado sin escribirlo a mano. Genera un reporte de Mercado Pago y puede tardar hasta un minuto.',
   ],
