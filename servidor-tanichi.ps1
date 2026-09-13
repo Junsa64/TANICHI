@@ -92,7 +92,7 @@ function Invocar-MP {
         $cuerpoError = $lector.ReadToEnd()
       } catch { }
     }
-    if ($cuerpoError) { throw $cuerpoError } else { throw $_.Exception.Message }
+    if ($cuerpoError) { throw $cuerpoError } else { throw "$($_.Exception.Message) (ruta: $Metodo $Ruta)" }
   }
 }
 
@@ -114,7 +114,7 @@ function Invocar-MP-Texto {
         $cuerpoError = $lector.ReadToEnd()
       } catch { }
     }
-    if ($cuerpoError) { throw $cuerpoError } else { throw $_.Exception.Message }
+    if ($cuerpoError) { throw $cuerpoError } else { throw "$($_.Exception.Message) (ruta: GET $Ruta)" }
   }
 }
 
@@ -314,16 +314,19 @@ while ($escucha.IsListening) {
     # rato si ya está, y hasta entonces se descarga. Cada llamada de éstas
     # es rápida —quien espera es el navegador, preguntando varias veces—,
     # así nunca se detiene este servidor esperando un reporte.
+    #
+    # Es el reporte de "liberaciones" (release_report), no el de
+    # "liquidaciones" (settlement_report): probado contra una cuenta real,
+    # settlement_report no existe para cuentas mexicanas (404 al crearlo)
+    # mientras que release_report sí funciona y de paso trae columnas mejores
+    # —incluye BALANCE_AMOUNT, el saldo real después de cada movimiento—.
     if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/reporte/crear') {
       $cred = Leer-CredencialesMP
       if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
       try {
         $datos = Leer-CuerpoJson $req
-        # Que el reporte sí incluya retiros: es un ajuste de la cuenta, no
-        # de este reporte en particular, pero no cuesta nada asegurarlo cada vez.
-        try { Invocar-MP -Metodo PUT -Ruta '/v1/account/settlement_report/config' -Token $cred.accessToken -Cuerpo @{ include_withdraw = $true } | Out-Null } catch { }
         $cuerpo = @{ begin_date = [string]$datos.desde; end_date = [string]$datos.hasta }
-        Responder-Json $res (Invocar-MP -Metodo POST -Ruta '/v1/account/settlement_report' -Token $cred.accessToken -Cuerpo $cuerpo)
+        Responder-Json $res (Invocar-MP -Metodo POST -Ruta '/v1/account/release_report' -Token $cred.accessToken -Cuerpo $cuerpo)
       } catch {
         Responder-Json $res @{ error = $_.Exception.Message } 502
       }
@@ -331,12 +334,14 @@ while ($escucha.IsListening) {
     }
 
     if ($rel -eq '__mp/reporte/estado') {
+      # release_report no devuelve un id buscable al crearlo (a diferencia de
+      # settlement_report): el que se puede consultar después es otro. Así
+      # que en vez de buscar por id, se piden los últimos reportes y el
+      # navegador se queda con el más reciente —el que se acaba de pedir—.
       $cred = Leer-CredencialesMP
       if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
-      $id = $req.QueryString['id']
-      if (-not $id) { Responder-Json $res @{ error = 'Falta el id del reporte.' } 400; continue }
       try {
-        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/account/settlement_report/search?id=$id" -Token $cred.accessToken)
+        Responder-Json $res (Invocar-MP -Metodo GET -Ruta '/v1/account/release_report/search?limit=5' -Token $cred.accessToken)
       } catch {
         Responder-Json $res @{ error = $_.Exception.Message } 502
       }
@@ -349,7 +354,7 @@ while ($escucha.IsListening) {
       $archivoReporte = $req.QueryString['archivo']
       if (-not $archivoReporte) { Responder-Json $res @{ error = 'Falta el nombre del archivo.' } 400; continue }
       try {
-        $texto = Invocar-MP-Texto -Ruta "/v1/account/settlement_report/$archivoReporte" -Token $cred.accessToken
+        $texto = Invocar-MP-Texto -Ruta "/v1/account/release_report/$archivoReporte" -Token $cred.accessToken
         $filas = ConvertirCsvMP $texto
         Responder-Json $res @{ movimientos = $filas }
       } catch {

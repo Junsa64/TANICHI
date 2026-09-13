@@ -119,11 +119,32 @@ async function cobrarConTerminalMP(monto) {
     MP_COBRO_ACTIVO = { ordenId: orden.id, detener: cancelar };
 
     const empezo = Date.now();
+    let erroresSeguidos = 0;
     const revisar = async () => {
       if (detenido) return;
-      let estado;
-      try { estado = await llamarMP('__mp/orden?id=' + encodeURIComponent(orden.id)); }
-      catch (e) { estado = null; }
+      let estado, error = null;
+      try {
+        estado = await llamarMP('__mp/orden?id=' + encodeURIComponent(orden.id));
+        erroresSeguidos = 0;
+      } catch (e) {
+        estado = null;
+        error = e.message;
+        erroresSeguidos++;
+      }
+
+      // Dos fallos seguidos: no es un bache de red, es algo que no se va a
+      // arreglar esperando —mejor avisar ya que agotar los 3 minutos en vano—.
+      if (erroresSeguidos >= 2) {
+        ocultarEsperaMP();
+        MP_COBRO_ACTIVO = null;
+        toast('No se pudo consultar el cobro: ' + error, 'error', 9000);
+        resolve(null);
+        return;
+      }
+
+      setText('espera-mp-estado', estado
+        ? `Mercado Pago dice: ${estado.status}${estado.status_detail ? ' (' + estado.status_detail + ')' : ''}`
+        : (error ? `Reintentando… (${error})` : ''));
 
       const status = estado && estado.status;
       if (status === 'processed') {
@@ -210,6 +231,7 @@ function mostrarEsperaMP(monto) {
   const modal = document.getElementById('modal-espera-mp');
   if (!modal) return;
   setText('espera-mp-monto', fmt(monto));
+  setText('espera-mp-estado', '');
   abrirModal('modal-espera-mp');
 }
 function ocultarEsperaMP() {
@@ -260,51 +282,59 @@ async function consultarMovimientosMPSaldos() {
    —no es instantáneo como buscar pagos—, así que hay que pedirlo y
    preguntar cada rato si ya está listo, hasta descargarlo.            */
 async function traerReporteMP(desdeISO, hastaISO) {
-  const creado = await llamarMP('__mp/reporte/crear', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ desde: desdeISO, hasta: hastaISO }),
-  });
-  const id = creado.report_id || creado.id;
-  if (!id) throw new Error('Mercado Pago no devolvió un identificador de reporte.');
+  try {
+    await llamarMP('__mp/reporte/crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ desde: desdeISO, hasta: hastaISO }),
+    });
+  } catch (e) {
+    throw new Error('Al pedir el reporte: ' + e.message);
+  }
 
+  // Mercado Pago no devuelve un id buscable al crear el reporte: hay que
+  // preguntar por los últimos y quedarse con el más reciente —el recién
+  // pedido—, en vez de buscarlo por id como en otros reportes suyos.
   const empezo = Date.now();
   while (Date.now() - empezo < 2 * 60 * 1000) {
     await new Promise(r => setTimeout(r, 4000));
-    const estado = await llamarMP('__mp/reporte/estado?id=' + encodeURIComponent(id));
+    let estado;
+    try {
+      estado = await llamarMP('__mp/reporte/estado');
+    } catch (e) {
+      throw new Error('Al consultar el estado del reporte: ' + e.message);
+    }
     const rep = (estado.results || [])[0];
-    if (rep && rep.status === 'processed' && rep.file_name) {
-      const descarga = await llamarMP('__mp/reporte/descargar?archivo=' + encodeURIComponent(rep.file_name));
-      return descarga.movimientos || [];
+    if (rep && (rep.status === 'enabled' || rep.status === 'processed') && rep.file_name) {
+      try {
+        const descarga = await llamarMP('__mp/reporte/descargar?archivo=' + encodeURIComponent(rep.file_name));
+        return descarga.movimientos || [];
+      } catch (e) {
+        throw new Error('Al descargar el reporte: ' + e.message);
+      }
     }
   }
   throw new Error('El reporte de Mercado Pago tardó demasiado. Intenta otra vez en un momento.');
 }
 
-/** Un renglón del reporte trae muchas columnas; estas dos son las únicas
-    que hacen falta, y su nombre puede variar mayúsculas/minúsculas. */
-function tipoMovimientoMP(fila) { return fila.TRANSACTION_TYPE || fila.transaction_type || '?'; }
-function montoMovimientoMP(fila) {
-  const v = fila.SETTLEMENT_NET_AMOUNT ?? fila.settlement_net_amount ?? fila.TRANSACTION_AMOUNT ?? fila.transaction_amount;
-  return Math.abs(num(v));
-}
+/** Columnas del reporte de liberaciones (release_report); su nombre puede
+    variar mayúsculas/minúsculas. BALANCE_AMOUNT es oro: es el saldo real
+    de la cuenta justo después de ese movimiento, tal como Mercado Pago lo
+    calcula —no hace falta sumar nada nosotros para saber el cierre—. */
+function fechaMovimientoMP(fila) { return fila.DATE || fila.date || ''; }
+function categoriaMovimientoMP(fila) { return fila.DESCRIPTION || fila.description || ''; }
+function montoMovimientoMP(fila) { return num(fila.GROSS_AMOUNT ?? fila.gross_amount); }
+function saldoTrasMovimientoMP(fila) { return num(fila.BALANCE_AMOUNT ?? fila.balance_amount); }
 
 const NOMBRES_MOVIMIENTO_MP = {
-  SETTLEMENT: 'Cobros', REFUND: 'Reembolsos', CHARGEBACK: 'Contracargos',
-  DISPUTE: 'Disputas', WITHDRAWAL: 'Retiros', WITHDRAWAL_CANCEL: 'Retiros cancelados', PAYOUT: 'Retiros',
-};
-
-/* Para calcular el saldo de cierre solo, sumando lo que de verdad entra y
-   sale de la cuenta. "Disputas" no se suma: mientras no se resuelve —y se
-   vuelve reembolso o contracargo— el dinero sigue reservado, no perdido. */
-const SIGNO_MOVIMIENTO_MP = {
-  SETTLEMENT: 1, REFUND: -1, CHARGEBACK: -1,
-  WITHDRAWAL: -1, WITHDRAWAL_CANCEL: 1, PAYOUT: -1,
+  payment: 'Cobros', payout: 'Retiros', refund: 'Reembolsos', chargeback: 'Contracargos',
+  cashback: 'Cashback recibido', money_transfer: 'Transferencias', asset_management: 'Rendimientos',
 };
 
 /** Botón de Corte de caja → Saldos: trae TODOS los movimientos reales del
-    día —incluidos los retiros—, calcula solo cuánto deberías tener y ofrece
-    llenar los dos campos de golpe, para no tener que anotar nada a mano. */
+    día —incluidos los retiros—, toma el saldo de cierre directo de lo que
+    Mercado Pago ya calculó y ofrece llenar los dos campos de golpe, para
+    no tener que anotar nada a mano. */
 async function consultarReporteMPSaldos() {
   const cont = document.getElementById('sal-mp-reporte');
   if (!cont) return;
@@ -316,21 +346,35 @@ async function consultarReporteMPSaldos() {
       cont.textContent = `Mercado Pago no registra movimientos de cuenta el ${fecha}.`;
       return;
     }
-    const grupos = new Map();
-    let neto = 0;
-    filas.forEach(f => {
-      const t = tipoMovimientoMP(f);
-      const monto = montoMovimientoMP(f);
-      grupos.set(t, redondear((grupos.get(t) || 0) + monto));
-      const signo = SIGNO_MOVIMIENTO_MP[t];
-      if (signo) neto = redondear(neto + signo * monto);
-    });
-    const retiros = redondear((grupos.get('WITHDRAWAL') || 0) + (grupos.get('PAYOUT') || 0)
-      - (grupos.get('WITHDRAWAL_CANCEL') || 0));
-    const cierre = redondear(num(TURNO.mpInicial) + neto);
+    // El reporte trae un renglón de totales al final, sin fecha —no es un
+    // movimiento, y su "saldo" es $0.00 de relleno—. Se descarta antes de
+    // buscar el saldo real, si no, el cierre siempre saldría en ceros.
+    const conFecha = filas.filter(f => fechaMovimientoMP(f));
+    const deHoyTodo = conFecha.filter(f => (fechaMovimientoMP(f) || '').slice(0, 10) === fecha);
+    // El saldo real más reciente que reporta Mercado Pago, tal cual —no se
+    // recalcula, se usa el que ellos ya calcularon—. Si hoy no hubo ningún
+    // movimiento todavía, se usa el último saldo real conocido.
+    const ultimaFila = (deHoyTodo.length ? deHoyTodo : conFecha).slice(-1)[0];
+    const cierre = ultimaFila ? redondear(saldoTrasMovimientoMP(ultimaFila)) : num(TURNO.mpInicial);
 
-    cont.innerHTML = '<ul class="lista-dif">' + [...grupos.entries()].map(([t, v]) =>
-      `<li>${esc(NOMBRES_MOVIMIENTO_MP[t] || t)}: ${fmt(v)}</li>`).join('') + '</ul>' +
+    // Sólo los movimientos de hoy, y sin la mecánica interna de "aparta y
+    // libera" (reserve_for_...), que siempre se cancela sola y no es un
+    // movimiento real de la cuenta.
+    const deHoy = deHoyTodo.filter(f => categoriaMovimientoMP(f) && !categoriaMovimientoMP(f).startsWith('reserve_for_'));
+
+    const grupos = new Map();
+    let retiros = 0;
+    deHoy.forEach(f => {
+      const cat = categoriaMovimientoMP(f);
+      const monto = montoMovimientoMP(f);
+      grupos.set(cat, redondear((grupos.get(cat) || 0) + monto));
+      if (cat === 'payout') retiros = redondear(retiros + Math.abs(monto));
+    });
+
+    cont.innerHTML = (grupos.size
+      ? '<ul class="lista-dif">' + [...grupos.entries()].map(([t, v]) =>
+          `<li>${esc(NOMBRES_MOVIMIENTO_MP[t] || t)}: ${fmt(Math.abs(v))}</li>`).join('') + '</ul>'
+      : `<p class="hint">Sin movimientos de hoy en la cuenta; sólo se pudo traer el saldo actual.</p>`) +
       `<button class="link" onclick="usarDatosDetectadosMP(${retiros}, ${cierre})">` +
       `Usar estos datos: retiros ${fmt(retiros)} y saldo de cierre ${fmt(cierre)}</button>`;
   } catch (e) {

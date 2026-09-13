@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '45';
+const VERSION_APP = '46';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,10 @@ const VERSION_APP = '45';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '46': [
+    'Encontrada la causa real del error "(404) No se encontró" al traer retiros y movimientos: la app pedía el reporte de cuenta equivocado —uno que no existe para cuentas mexicanas—. Ya se cambió al correcto, probado contra una cuenta real: ahora sí trae los movimientos del día y, de regalo, el saldo de cierre viene directo de Mercado Pago en vez de calculado por la app, así que es exacto.',
+    'El aviso de "cobrando en la terminal" ahora muestra el estatus real que reporta Mercado Pago mientras espera, y si no puede ni consultarlo avisa de inmediato en vez de quedarse pegado 3 minutos esperando en vano.',
+  ],
   '45': [
     'Corregido: el cobro con tarjeta en la terminal se podía quedar esperando para siempre. Mercado Pago a veces avisa que ya no puede confirmar sola (por ejemplo si tarda en reaccionar) y hay que revisar la pantalla de la terminal a mano —ahora la app lo detecta y muestra un botón "Ya se cobró en la terminal" para esos casos, en vez de quedarse pegada.',
     'Corregido: en Corte de caja → Saldos, los botones de Mercado Pago se veían encimados con el recuadro de "Deberías tener".',
