@@ -1214,30 +1214,137 @@ function aplicarStock(items, signo) {
 }
 
 /* -------------------------------------------------------------- recargas */
-let RECARGA_METODO = 'efectivo';
+let RECARGA_PAGOS = [{ metodo: 'efectivo', monto: 0 }];
+let RECARGA_MIXTO = false;
 
 function abrirRecarga() {
   if (!exigirTurnoAbierto()) return;
-  RECARGA_METODO = 'efectivo';
+  RECARGA_MIXTO = false;
+  RECARGA_PAGOS = [{ metodo: 'efectivo', monto: 0 }];
   setVal('recarga-monto', '');
   setVal('recarga-desc', '');
-  renderMetodosRecarga();
   actualizarPreviewRecarga();
   abrirModal('modal-recarga');
 }
 
-function fijarMetodoRecarga(m) {
-  RECARGA_METODO = METODOS_PAGO[m] ? m : 'efectivo';
-  renderMetodosRecarga();
-  actualizarPreviewRecarga();
+function restanteRecarga() {
+  const total = valOf('recarga-monto', 0);
+  const pagado = redondear(RECARGA_PAGOS.reduce((s, p) => s + num(p.monto), 0));
+  return redondear(total - pagado);
+}
+
+/** Un toque cambia la forma de pago completa; repartir vive detrás del
+    interruptor de pago mixto —igual que en el cobro del punto de venta—. */
+function fijarMetodoRecarga(metodo) {
+  if (!METODOS_PAGO[metodo]) return;
+
+  if (!RECARGA_MIXTO) {
+    RECARGA_PAGOS = [{ metodo, monto: valOf('recarga-monto', 0) }];
+    renderRecarga();
+    return;
+  }
+
+  const i = RECARGA_PAGOS.findIndex(p => p.metodo === metodo);
+  if (i >= 0) {
+    if (RECARGA_PAGOS.length === 1) { toast('Debe quedar al menos una forma de pago.', 'warn'); return; }
+    RECARGA_PAGOS.splice(i, 1);
+    const falta = restanteRecarga();
+    if (falta !== 0) RECARGA_PAGOS[0].monto = redondear(num(RECARGA_PAGOS[0].monto) + falta);
+  } else {
+    RECARGA_PAGOS.push({ metodo, monto: Math.max(0, restanteRecarga()) });
+  }
+  renderRecarga();
+}
+
+function alternarMixtoRecarga() {
+  RECARGA_MIXTO = !RECARGA_MIXTO;
+  if (!RECARGA_MIXTO) {
+    // Al volver a pago simple mandamos el método que traía más dinero
+    const principal = [...RECARGA_PAGOS].sort((a, b) => num(b.monto) - num(a.monto))[0];
+    RECARGA_PAGOS = [{ metodo: principal ? principal.metodo : 'efectivo', monto: valOf('recarga-monto', 0) }];
+  }
+  renderRecarga();
+}
+
+function fijarMontoPagoRecarga(metodo, valor) {
+  const p = RECARGA_PAGOS.find(x => x.metodo === metodo);
+  if (!p) return;
+  p.monto = Math.max(0, redondear(valor));
+  renderRecarga();
 }
 
 function renderMetodosRecarga() {
-  setHTML('recarga-metodos', ['efectivo', 'tarjeta', 'transferencia'].map(m => `
-    <button class="metodo ${RECARGA_METODO === m ? 'activo' : ''}" onclick="fijarMetodoRecarga('${m}')">
+  setHTML('recarga-metodos', ['efectivo', 'tarjeta', 'transferencia'].map(m => {
+    const activo = RECARGA_PAGOS.some(p => p.metodo === m);
+    return `<button class="metodo ${activo ? 'activo' : ''}" onclick="fijarMetodoRecarga('${m}')">
       <span class="metodo-ico">${icono(METODOS_PAGO[m].icono, 22)}</span>
       <span>${METODOS_PAGO[m].label}</span>
-    </button>`).join(''));
+    </button>`;
+  }).join(''));
+}
+
+/** Botones, interruptor de mixto, reparto y aviso de "listo para registrar"
+    —todo lo que depende de RECARGA_PAGOS, junto para no desincronizarse—. */
+function renderRecarga() {
+  renderMetodosRecarga();
+
+  const swMixto = document.getElementById('recarga-mixto');
+  if (swMixto) {
+    swMixto.classList.toggle('activo', !!RECARGA_MIXTO);
+    swMixto.innerHTML = `${icono(RECARGA_MIXTO ? 'palomita' : 'mas', 15)}
+      <span>${RECARGA_MIXTO ? 'Pago dividido entre varias formas' : 'Dividir el pago en dos o más formas'}</span>`;
+  }
+
+  const desglose = document.getElementById('recarga-desglose');
+  if (desglose) {
+    if (RECARGA_MIXTO) {
+      desglose.style.display = 'block';
+      desglose.innerHTML = `<div class="campo-lbl">Reparto del pago</div>` +
+        (RECARGA_PAGOS.length < 2 ? `<p class="hint">Toca arriba otra forma de pago para repartir el cobro.</p>` : '') +
+        RECARGA_PAGOS.map(p => `
+        <div class="cobro-row">
+          <label>${icono(METODOS_PAGO[p.metodo].icono, 16)}${METODOS_PAGO[p.metodo].label}</label>
+          <input class="input js-calc mono" inputmode="decimal" value="${p.monto}"
+                 onchange="fijarMontoPagoRecarga('${p.metodo}', this.value)"/>
+        </div>`).join('');
+    } else {
+      desglose.style.display = 'none';
+      desglose.innerHTML = '';
+    }
+  }
+
+  const falta = restanteRecarga();
+  const monto = valOf('recarga-monto', 0);
+  const aviso = document.getElementById('recarga-aviso');
+  const btn = document.getElementById('btn-registrar-recarga');
+  const listo = monto > 0 && igualDinero(falta, 0);
+  if (aviso) {
+    if (monto <= 0) aviso.innerHTML = `<span class="pill pill-warn">Escribe el monto de la recarga</span>`;
+    else if (!igualDinero(falta, 0)) aviso.innerHTML = `<span class="pill pill-warn">${falta > 0 ? `Faltan ${fmt(falta)} por asignar` : `Sobran ${fmt(-falta)} en el reparto`}</span>`;
+    else aviso.innerHTML = '';
+  }
+  if (btn) btn.disabled = !listo;
+
+  // Lo que compra el tiempo aire (arriba) no cambia con la forma de pago; lo
+  // que entra a caja o a Mercado Pago sí, y puede venir de varias formas a
+  // la vez —en efectivo va completo a la caja, con tarjeta la terminal
+  // descuenta su comisión, por transferencia llega completo a Mercado Pago—.
+  const contEntra = document.getElementById('recarga-entra');
+  if (contEntra) {
+    const lineas = RECARGA_PAGOS.filter(p => num(p.monto) > 0).map(p => {
+      if (p.metodo === 'tarjeta') {
+        const neto = redondear(num(p.monto) - comisionTerminal(p.monto));
+        return `<div class="rl"><span>Con tarjeta, entra a Mercado Pago (−${fmtNum(CONFIG.comisionTerminalPct, 2)}% de la terminal)</span><strong class="mono bueno">${fmt(neto)}</strong></div>`;
+      }
+      if (p.metodo === 'transferencia') {
+        return `<div class="rl"><span>Por transferencia, entra a tu cuenta de Mercado Pago</span><strong class="mono bueno">${fmt(p.monto)}</strong></div>`;
+      }
+      return `<div class="rl"><span>En efectivo, entra a tu caja</span><strong class="mono bueno">${fmt(p.monto)}</strong></div>`;
+    });
+    contEntra.innerHTML = lineas.join('') || `<div class="rl"><span>Entra en efectivo a tu caja</span><strong class="mono bueno">$0.00</strong></div>`;
+  }
+
+  pintarIconos(document.getElementById('modal-recarga'));
 }
 
 /* ============================================== ENVÍO DE DINERO ==========
@@ -1337,25 +1444,22 @@ function actualizarPreviewRecarga() {
   setText('recarga-comision', fmt(com));
   setText('recarga-neto', fmt(monto - com));
 
-  // Lo que compra el tiempo aire (arriba) no cambia con el método; lo que
-  // entra sí: en efectivo va completo a la caja, con tarjeta la terminal
-  // descuenta su comisión, por transferencia llega completo a Mercado Pago.
-  if (RECARGA_METODO === 'tarjeta') {
-    setText('recarga-entra-lbl', `Entra a Mercado Pago (−${fmtNum(CONFIG.comisionTerminalPct, 2)}% de la terminal)`);
-    setText('recarga-efectivo', fmt(redondear(monto - comisionTerminal(monto))));
-  } else if (RECARGA_METODO === 'transferencia') {
-    setText('recarga-entra-lbl', 'Entra a tu cuenta de Mercado Pago');
-    setText('recarga-efectivo', fmt(monto));
-  } else {
-    setText('recarga-entra-lbl', 'Entra en efectivo a tu caja');
-    setText('recarga-efectivo', fmt(monto));
+  // Fuera de pago mixto, la única forma de pago sigue el monto que se
+  // escribe; en mixto cada quien reparte el suyo a mano.
+  if (!RECARGA_MIXTO) {
+    const m = RECARGA_PAGOS[0] ? RECARGA_PAGOS[0].metodo : 'efectivo';
+    RECARGA_PAGOS = [{ metodo: m, monto }];
   }
+  renderRecarga();
 }
 
 function registrarRecarga() {
   const monto = valOf('recarga-monto', 0);
   const desc  = (document.getElementById('recarga-desc')?.value || '').trim();
   if (monto <= 0) { toast('Escribe el monto de la recarga.', 'error'); return; }
+  if (!igualDinero(restanteRecarga(), 0)) { toast('Revisa el reparto del pago.', 'error'); return; }
+  const pagos = RECARGA_PAGOS.filter(p => num(p.monto) > 0).map(p => ({ metodo: p.metodo, monto: redondear(p.monto) }));
+  if (!pagos.length) { toast('Revisa el reparto del pago.', 'error'); return; }
 
   const venta = {
     id: nuevoId('rec'), folio: siguienteFolio(), tipo: 'recarga',
@@ -1363,7 +1467,7 @@ function registrarRecarga() {
     fecha: TURNO.fecha || hoyISO(), fechaHora: new Date().toISOString(),
     items: [{ productoId: null, nombre: desc || 'Recarga de tiempo aire', sku: '', precio: monto, cantidad: 1, importe: monto, tipo: 'recarga' }],
     subtotal: monto, descuento: 0, total: monto,
-    pagos: [{ metodo: RECARGA_METODO, monto }],
+    pagos,
     recibido: monto, cambio: 0, cliente: '', cancelada: false,
   };
 
@@ -1376,7 +1480,10 @@ function registrarRecarga() {
   renderResumenTurnoPos();
   actualizarEstadoGlobal();
   respaldarPronto('recarga');
-  toast(`Recarga de ${fmt(monto)} registrada, cobrada con ${METODOS_PAGO[RECARGA_METODO].label.toLowerCase()}.`, 'success');
+  const comoPago = pagos.length > 1
+    ? 'con pago dividido'
+    : `cobrada con ${METODOS_PAGO[pagos[0].metodo].label.toLowerCase()}`;
+  toast(`Recarga de ${fmt(monto)} registrada, ${comoPago}.`, 'success');
 }
 
 /* --------------------------------------------------------------- ticket */

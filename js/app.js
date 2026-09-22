@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '46';
+const VERSION_APP = '47';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '46';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '47': [
+    'Las recargas ahora también se pueden pagar divididas entre varias formas —por ejemplo mitad efectivo, mitad tarjeta—, igual que un cobro normal del punto de venta.',
+  ],
   '46': [
     'Encontrada la causa real del error "(404) No se encontró" al traer retiros y movimientos: la app pedía el reporte de cuenta equivocado —uno que no existe para cuentas mexicanas—. Ya se cambió al correcto, probado contra una cuenta real: ahora sí trae los movimientos del día y, de regalo, el saldo de cierre viene directo de Mercado Pago en vez de calculado por la app, así que es exacto.',
     'El aviso de "cobrando en la terminal" ahora muestra el estatus real que reporta Mercado Pago mientras espera, y si no puede ni consultarlo avisa de inmediato en vez de quedarse pegado 3 minutos esperando en vano.',
