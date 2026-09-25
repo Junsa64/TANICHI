@@ -33,6 +33,8 @@ const ICONOS = {
 
   /* --- interfaz --- */
   buscar:   ['M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0', 'm20 20-3.5-3.5'],
+  cuadros:  ['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M3 14h7v7H3z', 'M14 14h7v7h-7z'],
+  lista:    ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3 6h.01', 'M3 12h.01', 'M3 18h.01'],
   mas:      ['M12 5v14', 'M5 12h14'],
   menos:    ['M5 12h14'],
   cerrar:   ['M18 6 6 18', 'm6 6 12 12'],

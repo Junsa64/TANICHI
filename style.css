@@ -572,16 +572,30 @@ select.input { cursor: pointer; }
 .dif-chip.malo  { background: var(--rojo-tinte); color: var(--rojo-osc); }
 
 /* ============================================================ POS ===== */
-.pos-layout { display: grid; grid-template-columns: 1fr 400px; gap: 0; align-items: start; border: var(--borde); background: var(--papel); }
+/* El ticket mide el doble de lo que medía (400px), con tope proporcional para
+   que en ventanas más angostas el catálogo no se quede sin lugar. */
+.pos-layout { display: grid; grid-template-columns: 1fr clamp(400px, 55vw, 800px); gap: 0; align-items: start; border: var(--borde); background: var(--papel); }
 .pos-tienda { display: flex; flex-direction: column; min-width: 0; border-right: var(--borde); }
-.pos-barra { display: flex; align-items: stretch; border-bottom: var(--borde); }
-.pos-barra .btn { border: 0; border-right: var(--borde); }
-.pos-barra .btn:last-child { border-right: 0; }
+/* Con el ticket ancho, el catálogo puede no dar para siete botones en una
+   fila: envuelven en dos y cada botón se estira para llenar su renglón.
+   El margen negativo esconde el borde doble contra la columna del ticket. */
+.pos-barra { display: flex; flex-wrap: wrap; align-items: stretch; margin-right: -2px; }
+.pos-barra .btn { flex: 1 1 auto; border: 0; border-right: var(--borde); border-bottom: var(--borde); }
 
 /* El buscador va debajo de las categorías, no arriba entre los botones de
    acción: así se lee de corrido con la rejilla de productos que filtra. */
-.pos-buscador-fila { border-bottom: var(--borde); background: var(--papel); }
-.pos-buscador-fila .buscador { width: 100%; border: 0; padding: 14px 16px; font-size: 15px; }
+.pos-buscador-fila { display: flex; align-items: stretch; border-bottom: var(--borde); background: var(--papel); }
+.pos-buscador-fila .buscador { flex: 1; min-width: 0; width: 100%; border: 0; padding: 14px 16px; font-size: 15px; }
+
+/* Cuadros / lista: dos botones pegados, el activo se pinta turquesa */
+.pos-vista-sw { display: flex; border-left: var(--borde); }
+.pos-vista-sw button {
+  display: grid; place-items: center; width: 52px; border: 0; border-right: var(--borde);
+  background: var(--papel); color: var(--tinta); cursor: pointer;
+}
+.pos-vista-sw button:last-child { border-right: 0; }
+.pos-vista-sw button:hover { background: var(--turquesa-claro); }
+.pos-vista-sw button.activo { background: var(--turquesa); color: #fdfbf6; }
 
 /* --- botones de acción por color -----------------------------------------
    Cada acción tiene su color y su franja. Con el uso se pican por color y
@@ -689,6 +703,20 @@ select.input { cursor: pointer; }
 .producto-stock.bajo { color: var(--ambar); opacity: 1; }
 .producto-stock.cero { color: var(--rojo); opacity: 1; }
 .producto:active .producto-stock { color: inherit; }
+
+/* ---- vista de lista ------------------------------------------------------
+   Los mismos botones `.producto`, pero uno por renglón: foto, nombre,
+   existencia y precio en columnas, para ver muchos productos de un vistazo. */
+.rejilla-productos.vista-lista { display: flex; flex-direction: column; gap: 0; padding: 0; }
+.vista-lista .producto {
+  flex-direction: row; align-items: center; gap: 16px;
+  min-height: 0; padding: 10px 20px;
+  border: 0; border-bottom: var(--linea);
+}
+.vista-lista .producto-foto { order: 0; width: 40px; height: 40px; flex: 0 0 auto; }
+.vista-lista .producto-nom { order: 1; flex: 1; min-width: 0; font-size: 15px; }
+.vista-lista .producto-stock { order: 2; flex: 0 0 150px; }
+.vista-lista .producto-precio { order: 3; flex: 0 0 96px; margin-top: 0; font-size: 18px; text-align: right; }
 
 /* carrito */
 .pos-carrito-panel {

@@ -66,6 +66,7 @@ const CONFIG_DEFAULT = {
   recargaMonto: 2,             // …Mercado Pago regresa $2
   stockMinDefault: 5,
   compacta: false,                     // barra de arriba achicada
+  posVista: 'cuadros',         // catálogo del punto de venta: 'cuadros' o 'lista'
   comisionEnvio: 15,           // lo que cobras por transferir dinero a un cliente
   tarjetaCreditoAlias: '',     // ej. "Tarjeta BBVA": si se deja vacío usa "Tarjeta de crédito"
   tarjetaCreditoDiaCorte: null, // día del mes (1-31) en que el banco cierra el periodo

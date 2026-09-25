@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '47';
+const VERSION_APP = '48';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '47';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '48': [
+    'En el punto de venta, el ticket ahora es el doble de ancho (hasta 800px, según lo permita la ventana), y arriba del catálogo hay dos botones para ver los productos en cuadros o en lista —se queda como lo dejes—.',
+  ],
   '47': [
     'Las recargas ahora también se pueden pagar divididas entre varias formas —por ejemplo mitad efectivo, mitad tarjeta—, igual que un cobro normal del punto de venta.',
   ],

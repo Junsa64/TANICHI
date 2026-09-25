@@ -166,9 +166,18 @@ function filtrarProductos(base = getProductos().filter(p => p.activo !== false))
   return base.filter(p => (p.categoria || 'General') === POS.categoria).sort(alfabetico);
 }
 
+function fijarVistaProductos(vista) {
+  saveConfig({ posVista: vista === 'lista' ? 'lista' : 'cuadros' });
+  renderProductos();
+}
+
 function renderProductos() {
   const cont = document.getElementById('pos-productos');
   if (!cont) return;
+  const enLista = CONFIG.posVista === 'lista';
+  cont.classList.toggle('vista-lista', enLista);
+  document.getElementById('pos-vista-cuadros')?.classList.toggle('activo', !enLista);
+  document.getElementById('pos-vista-lista')?.classList.toggle('activo', enLista);
   const todos = getProductos();
 
   if (!todos.length) {
