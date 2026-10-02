@@ -28,8 +28,18 @@ const Store = {
     try {
       const raw = localStorage.getItem(key);
       if (raw === null) return structuredClone(fallback);
-      const val = JSON.parse(raw);
-      return val === null || val === undefined ? structuredClone(fallback) : val;
+      let val = JSON.parse(raw);
+      if (val === null || val === undefined) return structuredClone(fallback);
+      // Una lista con huecos (null, números sueltos) tronaba cada pantalla que
+      // la recorría: se descartan los renglones que no son registros.
+      if (Array.isArray(val) && Array.isArray(fallback) && val.some(x => x !== null && typeof x === 'object')) {
+        val = val.filter(x => x !== null && typeof x === 'object');
+      } else if (Array.isArray(val)) {
+        val = val.filter(x => x !== null && x !== undefined);
+      }
+      // Lo contrario también: si se esperaba lista y llegó otra cosa, se usa la de respaldo.
+      if (Array.isArray(fallback) && !Array.isArray(val)) return structuredClone(fallback);
+      return val;
     } catch (e) {
       console.warn(`[Store] "${key}" corrupto, se usa el valor por defecto.`, e);
       return structuredClone(fallback);
@@ -109,8 +119,14 @@ function saveConfig(patch) {
  *  Algunos teclados (numérico, o de celular en español) escriben "," donde
  *  se espera el punto decimal: se acepta igual, para no perder el número. */
 function num(v, def = 0) {
-  const n = typeof v === 'number' ? v
-    : parseFloat(String(v ?? '').replace(',', '.').replace(/[^0-9.\-+]/g, ''));
+  if (typeof v === 'number') return Number.isFinite(v) ? v : def;
+  let s = String(v ?? '').trim();
+  // "1,234.50" y "1,234,567": la coma separa miles. Una sola coma sin punto
+  // ("12,5") sigue siendo decimal, como la escriben los teclados en español.
+  if (/\./.test(s) && /,/.test(s)) s = s.replace(/,/g, '');
+  else if ((s.match(/,/g) || []).length > 1) s = s.replace(/,/g, '');
+  else s = s.replace(',', '.');
+  const n = parseFloat(s.replace(/[^0-9.\-+]/g, ''));
   return Number.isFinite(n) ? n : def;
 }
 

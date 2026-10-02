@@ -322,7 +322,7 @@ function pintarBotonPantalla() {
   const b = document.getElementById('btn-pantalla');
   if (!b) return;
   const completa = !!document.fullscreenElement;
-  b.innerHTML = icono(completa ? 'bajar' : 'subir', 20);
+  b.innerHTML = icono(completa ? 'contraer' : 'expandir', 20);
   b.title = completa ? 'Salir de pantalla completa' : 'Pantalla completa';
 }
 
@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '49';
+const VERSION_APP = '50';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,11 @@ const VERSION_APP = '49';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '50': [
+    'Rediseño completo, con los mismos colores: tarjetas redondeadas con sombra suave, botones más grandes, letras en minúscula fáciles de leer en vez de mayúsculas espaciadas, ventanas emergentes limpias y un menú que se queda fijo arriba al bajar. Se acabaron los textos encimados y las barras que se salían de la pantalla.',
+    'El punto de venta se ve completo desde 900 px de ancho (antes se partía en dos desde 1180 px y el catálogo quedaba abajo del ticket). La barra de acciones, las categorías y los totales del turno ocupan menos y dejan más lugar a los productos.',
+    'Arreglos: el botón de pantalla completa salía vacío; los productos sin foto mostraban el nombre del icono en vez del icono; un fiado o abono sin nombre ya no se puede guardar con F12/Enter; "1,234.50" se lee como mil doscientos treinta y cuatro con cincuenta; y datos dañados en el almacenamiento ya no tumban pantallas enteras.',
+  ],
   '49': [
     'Corregido el cuadre de Mercado Pago con los abonos pagados con tarjeta: no se estaban contando, así que el dinero que sí llegaba a Mercado Pago salía como "sobrante". Ahora entran con los cobros con tarjeta —con la comisión de la terminal descontada, igual que una venta—.',
   ],
@@ -683,6 +688,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnTema) btnTema.innerHTML = icono(CONFIG.tema === 'claro' ? 'luna' : 'sol', 20);
   document.body.classList.toggle('compacta', CONFIG.compacta === true);
   pintarBotonCompactar();
+  pintarBotonPantalla();
 
   pintarIconos();          // rellena los <span data-ico> del HTML estático
   iniciarReloj();

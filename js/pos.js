@@ -1138,6 +1138,17 @@ function confirmarCobro() {
   const efe = pagos.find(p => p.metodo === 'efectivo');
   const t   = totalesCarrito();
 
+  // El botón ya se deshabilita, pero F12/Enter llegan hasta aquí sin pasar
+  // por él: lo mismo se valida de nuevo antes de guardar nada.
+  if ((pagos.some(p => p.metodo === 'credito') || c.tipo === 'abono') && !String(c.cliente || '').trim()) {
+    toast(c.tipo === 'abono' ? 'Escribe de quién es el abono.' : 'Escribe el nombre del cliente que se lleva fiado.', 'error');
+    return;
+  }
+  if (efe && num(c.recibido) > 0 && num(c.recibido) < num(efe.monto) - 0.005) {
+    toast('El efectivo recibido no alcanza.', 'error');
+    return;
+  }
+
   const venta = {
     id: nuevoId('vta'),
     folio: siguienteFolio(),

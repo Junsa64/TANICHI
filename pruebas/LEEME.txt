@@ -1,0 +1,15 @@
+PRUEBAS AUTOMÁTICAS DE EL TANICHI
+(Sólo para quien da mantenimiento a la app; la tienda no las necesita.)
+
+Requisitos: Node 18+, Google Chrome instalado y la librería puppeteer-core:
+    npm install puppeteer-core        (dentro de esta carpeta)
+
+Uso (cada paso en su ventana):
+    node serve.js                 -> sirve la app en http://localhost:8124
+    node func.js                  -> ventas, fiados, recargas, envíos, egresos, cuadre, cierre
+    node func2.js                 -> cierre/reapertura de corte, respaldo, CSV, XSS, números raros
+    node robust.js                -> datos dañados en el almacenamiento no deben tronar pantallas
+    node crawl.js etiqueta [dark] -> recorre todas las vistas y ventanas en 3 tamaños, avisa de
+                                     textos que se salen o se encimas y guarda capturas en capturas/
+
+Chrome se busca en C:/Program Files/Google/Chrome/Application/chrome.exe; cámbialo en cada archivo si está en otro lado.

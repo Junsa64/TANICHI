@@ -94,7 +94,7 @@ function renderInventario() {
           <div class="inv-celda-nom">
             ${fotoDe(p.id)
               ? `<img class="inv-foto" src="${fotoDe(p.id)}" alt=""/>`
-              : `<span class="inv-foto vacia">${iconoCategoria(p.categoria)}</span>`}
+              : `<span class="inv-foto vacia">${icono(iconoCategoria(p.categoria), 18)}</span>`}
             <div>
               <div class="inv-nom">${esc(p.nombre)}</div>
               <div class="inv-sub">${p.sku ? esc(p.sku) + ' · ' : ''}${esc(p.categoria || 'General')}${p.activo === false ? ' · inactivo' : ''}</div>
