@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="51"/>
+<meta name="tanichi-version" content="52"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=51"/>
+<link rel="stylesheet" href="style.css?v=52"/>
 </head>
 <body>
 
@@ -566,12 +566,10 @@
             <strong id="sal-mp-esperado" class="cifra-media mono">$0.00</strong>
             <span id="sal-mp-dif" class="dif-chip">$0.00</span>
           </div>
-          <button type="button" class="btn btn-ghost compacto ancho" onclick="consultarMovimientosMPSaldos()">
-            <span data-ico="telefono"></span> Ver mis cobros reales de hoy en Mercado Pago</button>
-          <div id="sal-mp-movimientos" class="hint ancho"></div>
-          <button type="button" class="btn btn-ghost compacto ancho" onclick="consultarReporteMPSaldos()">
-            <span data-ico="telefono"></span> Traer retiros y movimientos de hoy (puede tardar un minuto)</button>
-          <div id="sal-mp-reporte" class="hint ancho"></div>
+          <div id="sal-mp-sync" class="aviso ancho" style="margin:0"></div>
+          <button type="button" class="btn btn-ghost compacto ancho" onclick="sincronizarMP({ forzar: true })">
+            <span data-ico="telefono"></span> Actualizar ahora desde Mercado Pago</button>
+          <div id="sal-mp-reporte" class="ancho"></div>
         </div>
       </div>
 
@@ -1591,17 +1589,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=51"></script>
-<script src="js/iconos.js?v=51"></script>
-<script src="js/turno.js?v=51"></script>
-<script src="js/pos.js?v=51"></script>
-<script src="js/inventario.js?v=51"></script>
-<script src="js/corte.js?v=51"></script>
-<script src="js/historial.js?v=51"></script>
-<script src="js/reportes.js?v=51"></script>
-<script src="js/fotos.js?v=51"></script>
-<script src="js/fiados.js?v=51"></script>
-<script src="js/mercadopago.js?v=51"></script>
-<script src="js/app.js?v=51"></script>
+<script src="js/core.js?v=52"></script>
+<script src="js/iconos.js?v=52"></script>
+<script src="js/turno.js?v=52"></script>
+<script src="js/pos.js?v=52"></script>
+<script src="js/inventario.js?v=52"></script>
+<script src="js/corte.js?v=52"></script>
+<script src="js/historial.js?v=52"></script>
+<script src="js/reportes.js?v=52"></script>
+<script src="js/fotos.js?v=52"></script>
+<script src="js/fiados.js?v=52"></script>
+<script src="js/mercadopago.js?v=52"></script>
+<script src="js/app.js?v=52"></script>
 </body>
 </html>

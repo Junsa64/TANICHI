@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '51';
+const VERSION_APP = '52';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '51';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '52': [
+    'Corte de caja con Mercado Pago automático: al abrir el corte la app consulta sola tu cuenta y llena el saldo de cierre y los retiros —ya no hay que capturarlos—, y muestra todos los movimientos del día (cobros con tarjeta, transferencias, retiros y pagos hechos desde Mercado Pago, como las recargas). Mercado Pago a veces tarda varios minutos en armar el reporte: mientras tanto los campos se pueden capturar a mano y se llenan solos al llegar.',
+  ],
   '51': [
     'Terminal de Mercado Pago: la causa de que no se pudiera vincular es que la terminal viene en modo independiente y así nunca recibe cobros de la app. Ahora Ajustes lo detecta y ofrece "Activar modo punto de venta" (después hay que reiniciar la terminal), y el cobro avisa claro si falta ese paso en vez de quedarse esperando.',
   ],

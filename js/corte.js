@@ -255,6 +255,8 @@ function renderCorte() {
   setText('corte-horario', TURNO.horario || '—');
   setText('corte-fecha', fechaCorta(TURNO.fecha));
   setText('corte-fondo', fmt(fondoDeApertura()));
+  // Al entrar al corte, el saldo y los retiros de Mercado Pago se traen solos
+  if (typeof sincronizarMP === 'function') sincronizarMP();
 }
 
 /* ------------------------------------------------------- panel: efectivo */
@@ -566,6 +568,7 @@ function renderPanelSaldos() {
     setText('sal-tc-dif', fmtDiff(c.difTC));
     document.getElementById('sal-tc-dif')?.classList.toggle('malo', !igualDinero(c.difTC, 0));
   }
+  if (typeof pintarSyncMP === 'function') pintarSyncMP();
 }
 
 function onSaldo(clave, valor) {
