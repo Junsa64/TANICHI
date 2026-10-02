@@ -208,7 +208,7 @@ function posEnCero() {
   return {
     numVentas: 0, numRecargas: 0, numAbonos: 0, numDevoluciones: 0,
     efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0,
-    abonosEfectivo: 0, abonosTransfer: 0,
+    abonosEfectivo: 0, abonosTransfer: 0, abonosTarjeta: 0,
     recargas: 0, recargaEfectivo: 0, recargaTarjeta: 0, recargaTransferencia: 0,
     devuelto: 0, totalVendido: 0, piezas: 0,
     numEnvios: 0, enviado: 0, comisionEnvios: 0, envioPorCuenta: { mp: 0, cartera: 0, caja: 0 },
@@ -254,9 +254,11 @@ function totalesPos(turnoId = TURNO.id) {
     tarjeta:        neto('tarjeta'),
     transferencia:  neto('transferencia'),
     credito:        neto('credito'),
-    // Los abonos a cuenta pueden cobrarse en efectivo o por transferencia
+    // Los abonos a cuenta pueden cobrarse en efectivo, por transferencia o
+    // con tarjeta (en cuyo caso también pasan por la terminal y su comisión)
     abonosEfectivo: sumaPagos(abonos, 'efectivo'),
     abonosTransfer: sumaPagos(abonos, 'transferencia'),
+    abonosTarjeta:  sumaPagos(abonos, 'tarjeta'),
     // El total no depende de con qué pagó el cliente: la tienda de todos
     // modos compra el tiempo aire de su saldo MP. Por método sí importa,
     // para saber a qué cuenta entró lo que pagó el cliente.
@@ -628,7 +630,10 @@ function snapshotTurno() {
   const m   = TURNO.manual || {};
 
   const ventaEfectivo   = redondear(pos.efectivo       + num(m.ventaEfectivo));
-  const tarjeta         = redondear(pos.tarjeta        + num(m.tarjeta));
+  // Un abono pagado con tarjeta cruza la misma terminal que una venta: llega
+  // a Mercado Pago neto de comisión, así que cuenta aquí igual que la
+  // transferencia de un abono cuenta en la suya.
+  const tarjeta         = redondear(pos.tarjeta        + num(m.tarjeta) + pos.abonosTarjeta);
   const transferencia   = redondear(pos.transferencia  + num(m.transferencia) + pos.abonosTransfer);
   const pagoCreditos    = redondear(pos.abonosEfectivo + num(m.pagoCreditos));
   const creditoClientes = redondear(pos.credito        + num(m.creditoClientes));

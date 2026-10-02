@@ -279,7 +279,7 @@ function renderPanelIngresos() {
 
   const filas = [
     { k: 'ventaEfectivo',   lbl: 'Ventas en efectivo',        ico: 'billete', pos: pos.efectivo,       ayuda: 'Lo que entró en billetes y monedas.' },
-    { k: 'tarjeta',         lbl: 'Cobros con tarjeta',        ico: 'tarjeta', pos: pos.tarjeta,        ayuda: `La terminal descuenta ${fmtNum(CONFIG.comisionTerminalPct, 2)}% antes de depositar.` },
+    { k: 'tarjeta',         lbl: 'Cobros con tarjeta',        ico: 'tarjeta', pos: pos.tarjeta + pos.abonosTarjeta, ayuda: `Ventas y abonos. La terminal descuenta ${fmtNum(CONFIG.comisionTerminalPct, 2)}% antes de depositar.` },
     { k: 'transferencia',   lbl: 'Transferencias / SPEI',     ico: 'telefono', pos: pos.transferencia + pos.abonosTransfer, ayuda: 'Depósitos recibidos en Mercado Pago.' },
     { k: 'pagoCreditos',    lbl: 'Cobro de fiados',           ico: 'personas', pos: pos.abonosEfectivo, ayuda: 'Abonos en efectivo de clientes con crédito.' },
     { k: 'creditoClientes', lbl: 'Vendido a crédito (fiado)', ico: 'lapiz', pos: pos.credito,        ayuda: 'No entró dinero: queda por cobrar.' },
