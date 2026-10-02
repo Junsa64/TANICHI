@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '50';
+const VERSION_APP = '51';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '50';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '51': [
+    'Terminal de Mercado Pago: la causa de que no se pudiera vincular es que la terminal viene en modo independiente y así nunca recibe cobros de la app. Ahora Ajustes lo detecta y ofrece "Activar modo punto de venta" (después hay que reiniciar la terminal), y el cobro avisa claro si falta ese paso en vez de quedarse esperando.',
+  ],
   '50': [
     'Rediseño completo, con los mismos colores: tarjetas redondeadas con sombra suave, botones más grandes, letras en minúscula fáciles de leer en vez de mayúsculas espaciadas, ventanas emergentes limpias y un menú que se queda fijo arriba al bajar. Se acabaron los textos encimados y las barras que se salían de la pantalla.',
     'El punto de venta se ve completo desde 900 px de ancho (antes se partía en dos desde 1180 px y el catálogo quedaba abajo del ticket). La barra de acciones, las categorías y los totales del turno ocupan menos y dejan más lugar a los productos.',

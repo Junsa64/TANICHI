@@ -73,10 +73,34 @@ async function probarConexionMP() {
       cont.innerHTML = 'Se conectó, pero no aparece ninguna terminal. Revisa que esté encendida y en modo PDV.';
       return;
     }
-    cont.innerHTML = `<strong>${MP_TERMINALES.length} terminal(es) encontrada(s):</strong><br>` +
-      MP_TERMINALES.map(d => esc(d.external_pos_id || d.id)).join(', ');
+    cont.innerHTML = `<strong>${MP_TERMINALES.length} terminal(es) encontrada(s):</strong>` +
+      MP_TERMINALES.map(d => {
+        const pdv = d.operating_mode === 'PDV';
+        return `<div style="margin-top:8px">${esc(d.external_pos_id || d.id)} — ` +
+          (pdv ? '<span class="bueno">✓ lista para recibir cobros de la app</span>'
+               : '<span class="malo">en modo independiente: todavía no recibe cobros de la app</span>' +
+                 `<br><button class="btn btn-primary compacto" style="margin-top:6px" onclick="activarModoPdvMP('${esc(d.id)}')">Activar modo punto de venta</button>` +
+                 '<br><span class="hint">Después hay que reiniciar la terminal (apagarla y prenderla). Mientras esté en este modo no cobra por su cuenta.</span>') +
+          '</div>';
+      }).join('');
   } catch (e) {
     cont.innerHTML = `<span class="malo">${esc(e.message)}</span>`;
+  }
+}
+
+async function activarModoPdvMP(terminalId) {
+  const ok = await confirmar({
+    titulo: 'Activar modo punto de venta',
+    mensaje: 'La terminal dejará de cobrar por su cuenta y sólo recibirá los cobros que mande esta app. Mercado Pago pide reiniciarla (apagar y prender) para que el cambio surta efecto. ¿Continuar?',
+    ok: 'Sí, activar',
+  });
+  if (!ok) return;
+  try {
+    await llamarMP('__mp/modo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ terminalId, modo: 'PDV' }) });
+    toast('Listo. Ahora apaga y vuelve a prender la terminal.', 'success', 8000);
+    await probarConexionMP();
+  } catch (e) {
+    toast('No se pudo cambiar el modo: ' + e.message, 'error', 9000);
   }
 }
 
@@ -93,7 +117,11 @@ async function cobrarConTerminalMP(monto) {
     toast('No hay ninguna terminal conectada. Ve a Ajustes → Terminal de Mercado Pago.', 'error', 7000);
     return null;
   }
-  const terminal = MP_TERMINALES[0];   // si hay varias, se cobra en la primera
+  const terminal = MP_TERMINALES.find(d => d.operating_mode === 'PDV') || MP_TERMINALES[0];
+  if (terminal.operating_mode !== 'PDV') {
+    toast('La terminal está en modo independiente y no recibe cobros de la app. Ve a Ajustes → Terminal de Mercado Pago y pulsa "Activar modo punto de venta".', 'error', 10000);
+    return null;
+  }
 
   let orden;
   try {

@@ -246,6 +246,23 @@ while ($escucha.IsListening) {
       continue
     }
 
+    # La terminal viene en modo STANDALONE (cobra por su cuenta) y no recibe
+    # cobros de la app hasta pasarla a PDV. Mercado Pago pide reiniciarla después.
+    if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/modo') {
+      $cred = Leer-CredencialesMP
+      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
+      try {
+        $datos = Leer-CuerpoJson $req
+        $modo = [string]$datos.modo
+        if ($modo -ne 'PDV' -and $modo -ne 'STANDALONE') { Responder-Json $res @{ error = 'Modo no válido.' } 400; continue }
+        $cuerpo = @{ terminals = @(@{ id = [string]$datos.terminalId; operating_mode = $modo }) }
+        Responder-Json $res (Invocar-MP -Metodo PATCH -Ruta '/terminals/v1/setup' -Token $cred.accessToken -Cuerpo $cuerpo)
+      } catch {
+        Responder-Json $res @{ error = $_.Exception.Message } 502
+      }
+      continue
+    }
+
     if ($req.HttpMethod -eq 'POST' -and $rel -eq '__mp/cobrar') {
       $cred = Leer-CredencialesMP
       if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
