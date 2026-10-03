@@ -75,6 +75,7 @@ function topVendidos(limite = TOP_MAX) {
 
 /* --------------------------------------------------------- render tienda */
 function renderPos() {
+  prepararTecladoPos();
   renderCategorias();
   renderProductos();
   renderCarrito();
@@ -94,10 +95,47 @@ function renderCategorias() {
   // El nombre viaja en data-cat, no dentro del onclick: una categoría con
   // apóstrofo ("Bebida's") rompería el código en línea.
   cont.innerHTML = cats.map(c => `
-    <button class="chip ${c === POS.categoria ? 'activo' : ''} ${c === CAT_TOP ? 'destacado' : ''}" data-cat="${esc(c)}"
+    <button tabindex="-1" class="chip ${c === POS.categoria ? 'activo' : ''} ${c === CAT_TOP ? 'destacado' : ''}" data-cat="${esc(c)}"
             onclick="filtrarCategoria(this.dataset.cat)">
       ${icono(iconoCategoria(c), 18)}<span>${etiquetaCategoria(c)}</span>
     </button>`).join('');
+}
+
+/* Teclado del mostrador: de la búsqueda, Tab cae directo en el primer producto
+   y las flechas recorren la lista. Los botones de alrededor (acciones,
+   categorías, cuadros/lista) salen del orden de Tab —ya tienen su atajo o
+   se usan con el ratón— para que Tab no se pierda en ellos. */
+let _tecladoPosListo = false;
+function prepararTecladoPos() {
+  document.querySelectorAll('.pos-barra .btn, .pos-vista-sw button').forEach(b => b.setAttribute('tabindex', '-1'));
+  if (_tecladoPosListo) return;
+  const cont = document.getElementById('pos-productos');
+  if (!cont) return;
+  _tecladoPosListo = true;
+  cont.addEventListener('keydown', (ev) => {
+    const btn = ev.target.closest && ev.target.closest('.producto');
+    if (!btn) return;
+    const todos = [...cont.querySelectorAll('.producto')];
+    const i = todos.indexOf(btn);
+    const lista = CONFIG.posVista === 'lista';
+    // En cuadros "una fila" son tantos como quepan en el ancho
+    let porFila = 1;
+    if (!lista && todos.length > 1) {
+      const y0 = todos[0].offsetTop;
+      porFila = Math.max(1, todos.findIndex(b => b.offsetTop !== y0));
+      if (porFila === -1 || todos.every(b => b.offsetTop === y0)) porFila = todos.length;
+    }
+    const ir = (j) => { const t = todos[Math.max(0, Math.min(todos.length - 1, j))]; if (t) { t.focus(); t.scrollIntoView({ block: 'nearest' }); } ev.preventDefault(); };
+    if (ev.key === 'ArrowDown')       ir(i + porFila);
+    else if (ev.key === 'ArrowUp')    { if (i < porFila) { document.getElementById('pos-buscar')?.focus(); ev.preventDefault(); } else ir(i - porFila); }
+    else if (ev.key === 'ArrowRight' && !lista) ir(i + 1);
+    else if (ev.key === 'ArrowLeft' && !lista)  ir(i - 1);
+    else if (ev.key === 'Escape') { const b = document.getElementById('pos-buscar'); if (b) { b.focus(); b.select(); ev.preventDefault(); } }
+    // Escribir estando en un producto vuelve a la búsqueda con esa letra
+    else if (ev.key.length === 1 && !ev.ctrlKey && !ev.altKey && !ev.metaKey && ev.key !== ' ') {
+      const b = document.getElementById('pos-buscar'); if (b) b.focus();
+    }
+  });
 }
 
 function etiquetaCategoria(c) {
@@ -128,6 +166,11 @@ function limpiarBusqueda() {
 /** Enter en el buscador: si hay un único resultado (o un SKU exacto) lo agrega
  *  directo. Así funciona igual que un lector de código de barras. */
 function onBuscarKey(ev) {
+  if (ev.key === 'ArrowDown') {
+    const p = document.querySelector('#pos-productos .producto');
+    if (p) { p.focus(); ev.preventDefault(); }
+    return;
+  }
   // Los lectores en modo teclado cierran con Enter; algunos controladores
   // lo reportan distinto, así que se aceptan las variantes conocidas.
   const esEnter = ev.key === 'Enter' || ev.key === 'Return' || ev.keyCode === 13;
@@ -207,7 +250,7 @@ function renderProductos() {
     <div class="busqueda-aviso">
       ${icono('buscar', 16)}
       <span><strong>${fmtNum(lista.length)}</strong> resultado(s) en todo el catálogo</span>
-      <button class="link" onclick="limpiarBusqueda()">Limpiar búsqueda</button>
+      <button class="link" tabindex="-1" onclick="limpiarBusqueda()">Limpiar búsqueda</button>
     </div>` : '';
 
   cont.innerHTML = aviso + lista.map(p => {

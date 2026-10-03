@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '52';
+const VERSION_APP = '53';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '52';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '53': [
+    'Teclado en el punto de venta: después de buscar, Tab cae directo en el primer producto (y Flecha abajo también); con las flechas recorres la lista, Enter lo agrega al ticket y Esc regresa a la búsqueda. Escribir estando en un producto vuelve a la búsqueda. Los botones de alrededor (acciones, categorías, cuadros/lista) ya no estorban al tabular.',
+  ],
   '52': [
     'Corte de caja con Mercado Pago automático: al abrir el corte la app consulta sola tu cuenta y llena el saldo de cierre y los retiros —ya no hay que capturarlos—, y muestra todos los movimientos del día (cobros con tarjeta, transferencias, retiros y pagos hechos desde Mercado Pago, como las recargas). Mercado Pago a veces tarda varios minutos en armar el reporte: mientras tanto los campos se pueden capturar a mano y se llenan solos al llegar.',
   ],
