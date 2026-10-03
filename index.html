@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="54"/>
+<meta name="tanichi-version" content="55"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=54"/>
+<link rel="stylesheet" href="style.css?v=55"/>
 </head>
 <body>
 
@@ -203,9 +203,9 @@
         <button class="btn btn-ghost" data-accion="recarga" onclick="abrirRecarga()" title="Registrar una recarga de tiempo aire (tecla R)"><span data-ico="telefono"></span> Recarga</button>
         <button class="btn btn-ghost" data-accion="envio" onclick="abrirEnvio()" title="Transfieres tu dinero y el cliente te paga en efectivo (Alt+T)"><span data-ico="banco"></span> Enviar</button>
         <button class="btn btn-ghost" data-accion="abono" onclick="abrirCobroAbono()" title="Cobrar un abono de un cliente con fiado"><span data-ico="personas"></span> Abono</button>
-        <button class="btn btn-ghost" data-accion="devol" onclick="abrirBuscarVenta()" title="El cliente regresa mercancía"><span data-ico="regresar"></span> Devolución</button>
+        <button class="btn btn-ghost" data-accion="devol" onclick="abrirBuscarVenta()" title="El cliente regresa mercancía"><span data-ico="paquete"></span> Devolución</button>
         <button class="btn btn-ghost" data-accion="consulta" onclick="abrirConsulta()" title="Ver, reimprimir o corregir un ticket ya cobrado (tecla F3)"><span data-ico="recibo"></span> Consultar ticket</button>
-        <button class="btn btn-ghost" data-accion="egreso" onclick="abrirEgreso()" title="Registrar dinero que sale de la caja: proveedores, servicios, sueldos (Alt+E)"><span data-ico="subir"></span> Egreso</button>
+        <button class="btn btn-ghost" data-accion="egreso" onclick="abrirEgreso()" title="Registrar dinero que sale de la caja: proveedores, servicios, sueldos (Alt+E)"><span data-ico="moneda"></span> Egreso</button>
       </div>
 
       <div id="pos-categorias" class="chips tira"></div>
@@ -344,8 +344,8 @@
 
   <div id="corte-tabs" class="tabs no-imprimir">
     <button class="tab activo" data-tab="efectivo" onclick="activarTabCorte('efectivo')"><span data-ico="billete"></span> Efectivo</button>
-    <button class="tab" data-tab="ingresos" onclick="activarTabCorte('ingresos')"><span data-ico="subir"></span> Ingresos</button>
-    <button class="tab" data-tab="egresos" onclick="activarTabCorte('egresos')"><span data-ico="subir"></span> Egresos</button>
+    <button class="tab" data-tab="ingresos" onclick="activarTabCorte('ingresos')"><span data-ico="billete"></span> Ingresos</button>
+    <button class="tab" data-tab="egresos" onclick="activarTabCorte('egresos')"><span data-ico="moneda"></span> Egresos</button>
     <button class="tab" data-tab="saldos" onclick="activarTabCorte('saldos')"><span data-ico="banco"></span> Saldos</button>
     <button class="tab" data-tab="cuadre" onclick="activarTabCorte('cuadre')"><span data-ico="balanza"></span> Cuadre</button>
     <button class="tab" data-tab="reporte" onclick="activarTabCorte('reporte')"><span data-ico="ticket"></span> Reporte</button>
@@ -395,8 +395,8 @@
             + recargas − egresos − dotación a cartera. Captura primero ingresos y egresos y vuelve aquí.
           </p>
           <div class="atajos-panel">
-            <button class="btn btn-ghost" onclick="activarTabCorte('ingresos')">Ir a ingresos →</button>
-            <button class="btn btn-ghost" onclick="activarTabCorte('egresos')">Ir a egresos →</button>
+            <button class="btn btn-ghost" onclick="activarTabCorte('ingresos')">Ir a ingresos</button>
+            <button class="btn btn-ghost" onclick="activarTabCorte('egresos')">Ir a egresos</button>
           </div>
         </div>
       </div>
@@ -1589,17 +1589,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=54"></script>
-<script src="js/iconos.js?v=54"></script>
-<script src="js/turno.js?v=54"></script>
-<script src="js/pos.js?v=54"></script>
-<script src="js/inventario.js?v=54"></script>
-<script src="js/corte.js?v=54"></script>
-<script src="js/historial.js?v=54"></script>
-<script src="js/reportes.js?v=54"></script>
-<script src="js/fotos.js?v=54"></script>
-<script src="js/fiados.js?v=54"></script>
-<script src="js/mercadopago.js?v=54"></script>
-<script src="js/app.js?v=54"></script>
+<script src="js/core.js?v=55"></script>
+<script src="js/iconos.js?v=55"></script>
+<script src="js/turno.js?v=55"></script>
+<script src="js/pos.js?v=55"></script>
+<script src="js/inventario.js?v=55"></script>
+<script src="js/corte.js?v=55"></script>
+<script src="js/historial.js?v=55"></script>
+<script src="js/reportes.js?v=55"></script>
+<script src="js/fotos.js?v=55"></script>
+<script src="js/fiados.js?v=55"></script>
+<script src="js/mercadopago.js?v=55"></script>
+<script src="js/app.js?v=55"></script>
 </body>
 </html>
