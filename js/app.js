@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '53';
+const VERSION_APP = '54';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '53';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '54': [
+    'Limpieza: se quitó código que ya nada usaba (funciones sueltas, una consulta de movimientos de Mercado Pago que reemplazó la sincronización automática, un estilo y un ajuste sin efecto). No cambia nada de lo que ves ni de cómo se cuadra.',
+  ],
   '53': [
     'Teclado en el punto de venta: después de buscar, Tab cae directo en el primer producto (y Flecha abajo también); con las flechas recorres la lista, Enter lo agrega al ticket y Esc regresa a la búsqueda. Escribir estando en un producto vuelve a la búsqueda. Los botones de alrededor (acciones, categorías, cuadros/lista) ya no estorban al tabular.',
   ],

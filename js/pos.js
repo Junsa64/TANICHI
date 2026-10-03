@@ -955,9 +955,6 @@ function elegirMetodo(metodo) {
   volverAlImporteCobro();
 }
 
-/** Compatibilidad: algo viejo podría seguir llamando al nombre anterior. */
-function alternarMetodo(metodo) { elegirMetodo(metodo); }
-
 function alternarMixto() {
   const c = POS.cobro;
   if (!c) return;

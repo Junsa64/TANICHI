@@ -63,7 +63,6 @@ const Store = {
 /* --------------------------------------------------------------- config */
 const CONFIG_DEFAULT = {
   negocio: 'EL TANICHI',
-  lema: 'Punto de Venta y Corte de Caja',
   cajeros: ['Martha', 'Virginia'],
   turnos: [
     { horario: '8:00 a 11:00',  cajero: 'Martha'   },
@@ -463,14 +462,6 @@ function addSugerencia(clave, valor) {
     Store.set(DB.sugerencias, all);
     refrescarDatalists();
   }
-}
-
-function borrarSugerencia(clave, valor) {
-  const all = Store.get(DB.sugerencias, {});
-  if (!Array.isArray(all[clave])) return;
-  all[clave] = all[clave].filter(x => x !== valor);
-  Store.set(DB.sugerencias, all);
-  refrescarDatalists();
 }
 
 /** Rellena los <datalist> del documento con las sugerencias guardadas. */
@@ -980,7 +971,4 @@ function aplicarFormula(el) {
 
 /* Los campos de dinero son type="text" con inputmode numérico para poder
    aceptar fórmulas; esta función normaliza lo que el usuario deja escrito. */
-function normalizarCampoDinero(el) {
-  const v = evaluarExpresion(el.value);
-  if (v !== null) el.value = v;
-}
+

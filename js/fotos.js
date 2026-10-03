@@ -37,8 +37,6 @@ function fotoDe(productoId) {
   return (productoId && getFotos()[productoId]) || '';
 }
 
-function tieneFoto(productoId) { return !!fotoDe(productoId); }
-
 /** Bytes aproximados que ocupan todas las fotos juntas. */
 function pesoFotos() {
   const m = getFotos();

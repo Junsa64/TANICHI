@@ -689,11 +689,6 @@ select.input { cursor: pointer; }
 .er-fila.principal { background: var(--acento-suave); font-size: 15px; }
 .er-fila.principal strong { font-size: 24px; font-weight: 900; }
 .er-fila.ganancia span:last-child { font-weight: 900; color: var(--c-abono); }
-.producto-cat {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 10px; font-weight: 700; letter-spacing: .14em;
-  text-transform: uppercase; color: inherit; opacity: .72;
-}
 .producto-nom { font-size: 16px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
 .producto-precio { margin-top: auto; font-size: 20px; font-weight: 900; }
 .producto-stock { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .72; }

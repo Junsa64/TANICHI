@@ -269,41 +269,9 @@ function cancelarEsperaMP() {
   if (MP_COBRO_ACTIVO) MP_COBRO_ACTIVO.detener();
 }
 
-/* --------------------------------------------------- movimientos reales
-   Para comparar contra lo que el corte calculó, en vez de escribirlo a
-   mano. Se usa desde Corte de caja → Saldos.                            */
-async function consultarMovimientosMP(desdeISO, hastaISO) {
-  const q = `__mp/movimientos?desde=${encodeURIComponent(desdeISO)}&hasta=${encodeURIComponent(hastaISO)}`;
-  const r = await llamarMP(q);
-  return (r.results || []).map(p => ({
-    id: p.id, fecha: p.date_created, estado: p.status,
-    monto: num(p.transaction_amount), descripcion: p.description || '',
-  }));
-}
 
 /** Botón de Corte de caja → Saldos: compara contra lo que de verdad pasó
     en Mercado Pago el día del turno, en vez de fiarse sólo de la memoria. */
-async function consultarMovimientosMPSaldos() {
-  const cont = document.getElementById('sal-mp-movimientos');
-  if (!cont) return;
-  cont.textContent = 'Consultando…';
-  const fecha = TURNO.fecha || hoyISO();
-  try {
-    const movs = await consultarMovimientosMP(fecha, fecha);
-    if (!movs.length) {
-      cont.textContent = `Mercado Pago no tiene cobros el ${fecha}.`;
-      return;
-    }
-    const aprobados = movs.filter(m => m.estado === 'approved');
-    const total = redondear(aprobados.reduce((s, m) => s + m.monto, 0));
-    cont.innerHTML = `<strong>${aprobados.length} cobro(s) aprobado(s) el ${fecha}: ${fmt(total)}.</strong>` +
-      '<ul class="lista-dif">' + aprobados.slice(0, 8).map(m =>
-        `<li>${esc(horaDe(m.fecha))} — ${fmt(m.monto)}${m.descripcion ? ' · ' + esc(m.descripcion) : ''}</li>`).join('') +
-      (aprobados.length > 8 ? `<li>y ${aprobados.length - 8} más…</li>` : '') + '</ul>';
-  } catch (e) {
-    cont.innerHTML = `<span class="malo">${esc(e.message)}</span>`;
-  }
-}
 
 /* ------------------------------------------------- reporte de cuenta
    Retiros, liquidaciones y demás: Mercado Pago arma este reporte de fondo

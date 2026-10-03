@@ -310,22 +310,6 @@ while ($escucha.IsListening) {
       continue
     }
 
-    if ($rel -eq '__mp/movimientos') {
-      $cred = Leer-CredencialesMP
-      if (-not ($cred -and $cred.accessToken)) { Responder-Json $res @{ error = 'Falta configurar el Access Token en Ajustes.' } 400; continue }
-      try {
-        $desde = $req.QueryString['desde']
-        $hasta = $req.QueryString['hasta']
-        $q = '?sort=date_created&criteria=desc&range=date_created&limit=200'
-        if ($desde) { $q += '&begin_date=' + [Uri]::EscapeDataString($desde + 'T00:00:00.000-06:00') }
-        if ($hasta) { $q += '&end_date='   + [Uri]::EscapeDataString($hasta + 'T23:59:59.999-06:00') }
-        Responder-Json $res (Invocar-MP -Metodo GET -Ruta "/v1/payments/search$q" -Token $cred.accessToken)
-      } catch {
-        Responder-Json $res @{ error = $_.Exception.Message } 502
-      }
-      continue
-    }
-
     # ------------------------------------ reporte de cuenta (retiros, etc.)
     # Mercado Pago arma este reporte de fondo: se pide, se pregunta cada
     # rato si ya está, y hasta entonces se descarga. Cada llamada de éstas

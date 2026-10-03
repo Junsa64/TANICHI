@@ -398,10 +398,6 @@ function traspasosPorCuenta(lista) {
   return r;
 }
 
-function totalTraspasos(lista = TURNO.traspasos) {
-  return redondear((lista || []).reduce((s, t) => s + num(t.monto), 0));
-}
-
 /* ================================================================= CUADRE
    Un único lugar donde se calcula el cuadre. El tab de Cuadre, el reporte,
    el TXT y el historial leen todos de aquí: no pueden contradecirse.
