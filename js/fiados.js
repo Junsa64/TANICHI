@@ -385,6 +385,17 @@ const ETIQUETA_MOV = {
   saldoInicial: 'Deuda anterior',
 };
 
+/** "Efectivo", "Tarjeta"… y, si el pago se dividió, cada parte con su monto. */
+function pillsMetodos(v) {
+  const pagos = (v.pagos || []).filter(p => num(p.monto) > 0);
+  if (!pagos.length) return '';
+  return pagos.map(p => {
+    const m = METODOS_PAGO[p.metodo] || { label: p.metodo, icono: 'moneda' };
+    const monto = pagos.length > 1 ? ` ${fmt(p.monto)}` : '';
+    return `<span class="pill pill-metodo ${esc(p.metodo)}">${icono(m.icono, 14)}${esc(m.label)}${monto}</span>`;
+  }).join('');
+}
+
 function renderConsulta() {
   const cont = document.getElementById('cs-lista');
   if (!cont) return;
@@ -428,7 +439,7 @@ function renderConsulta() {
           </div>
           <span class="cs-detalle">${esc((v.items || []).map(i =>
             `${fmtNum(i.cantidad, num(i.cantidad) % 1 ? 2 : 0)}× ${i.nombre}`).join(', ')).slice(0, 120)}</span>
-          ${v.cliente ? `<span class="hint">${icono('personas', 13)} ${esc(v.cliente)}</span>` : ''}
+          <div class="cs-metodos">${pillsMetodos(v)}${v.cliente ? `<span class="hint">${icono('personas', 13)} ${esc(v.cliente)}</span>` : ''}</div>
         </div>
         <span class="cs-total mono">${fmt(v.total)}</span>
         <div class="cs-acciones">

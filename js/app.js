@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '55';
+const VERSION_APP = '56';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '55';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '56': [
+    'Consultar ticket: ya se puede desplazar la lista (el rediseño la había dejado fija, igual que el historial de cortes) y cada renglón muestra con qué se pagó —efectivo, tarjeta, transferencia o fiado, y el monto de cada parte si se dividió— sin tener que abrir cada ticket.',
+  ],
   '55': [
     'Nuevo diseño de mostrador, pensado para vender rápido: el total del ticket es lo más grande de la pantalla y "Cobrar" el único botón con color lleno. El verde se usa solo para cobrar y confirmar, el rojo solo para cancelar y eliminar; todo lo demás es sobrio. Botones de 48 px o más, letra más grande y cifras alineadas, sin sombras ni animaciones, en tema claro y oscuro. Todos los colores y medidas salen de variables al inicio de style.css.',
   ],

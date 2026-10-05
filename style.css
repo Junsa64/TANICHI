@@ -1796,7 +1796,8 @@ body .cabecera, body.pos-pantalla .cabecera { position: static; }
 .ing-lbl strong { font-size: var(--t-sm); }
 .ing-ico { color: var(--gris); }
 .comision { border: var(--borde); border-radius: var(--r-m); background: var(--neutro); }
-.resumen-lineas, .mini-lista, .devol-lista, .bv-lista, .lista-cortes { border: var(--borde); border-radius: var(--r-m); overflow: hidden; }
+.resumen-lineas, .devol-lista { border: var(--borde); border-radius: var(--r-m); overflow: hidden; }
+.mini-lista, .bv-lista, .lista-cortes { border: var(--borde); border-radius: var(--r-m); overflow-x: hidden; overflow-y: auto; }
 .rl { padding: var(--s3) var(--s4); font-size: var(--t-sm); }
 .rl strong { font-size: var(--t-md); }
 .rl.total { border-top: var(--borde); font-size: var(--t-sm); background: var(--neutro); }
@@ -1939,3 +1940,10 @@ body .cabecera, body.pos-pantalla .cabecera { position: static; }
   .pos-ver-movs { flex: 1 1 100%; justify-content: center; min-height: 44px; }
 }
 .guardado { text-transform: none; letter-spacing: 0; font-weight: 700; }
+
+/* Consultar ticket: método de pago visible en cada renglón */
+.cs-pago { display: inline-flex; align-items: center; gap: var(--s1); font-size: var(--t-xs); font-weight: 700; color: var(--gris); }
+.cs-metodos { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: 2px; }
+.pill-metodo { display: inline-flex; align-items: center; gap: 6px; background: var(--neutro); color: var(--tinta); }
+.pill-metodo.credito { background: var(--ambar-tinte); color: var(--ambar); }
+#cs-filtros, #bv-filtros { margin: var(--s3) 0 var(--s2); }
