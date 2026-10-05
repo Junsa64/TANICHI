@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '56';
+const VERSION_APP = '57';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '56';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '57': [
+    'Reportes → Ventas y ganancias ahora se puede separar por producto, categoría, cajero, hora del día y forma de pago, además de por día, ticket y renglón. Cada grupo muestra tickets, piezas, venta, costo, ganancia, margen y qué porcentaje de la venta representa, y se puede imprimir o exportar a CSV.',
+  ],
   '56': [
     'Consultar ticket: ya se puede desplazar la lista (el rediseño la había dejado fija, igual que el historial de cortes) y cada renglón muestra con qué se pagó —efectivo, tarjeta, transferencia o fiado, y el monto de cada parte si se dividió— sin tener que abrir cada ticket.',
   ],

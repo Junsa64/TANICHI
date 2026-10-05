@@ -16,9 +16,23 @@ const REPORTES = {
 /* El reporte de ventas se mira a tres alturas. Es el mismo reporte: cambia
    el detalle, no los números. */
 const NIVELES = {
-  dia:      'Por día',
-  ticket:   'Ticket por ticket',
-  producto: 'Renglón por renglón',
+  dia:         'Por día',
+  porproducto: 'Por producto',
+  categoria:   'Por categoría',
+  cajero:      'Por cajero',
+  hora:        'Por hora',
+  metodo:      'Por forma de pago',
+  ticket:      'Ticket por ticket',
+  producto:    'Renglón por renglón',
+};
+
+/* Los niveles que agrupan renglones: cada uno dice cómo se llama el grupo y
+   a cuál pertenece un renglón vendido. */
+const GRUPOS = {
+  porproducto: { titulo: 'Producto',  de: f => f.producto || 'Sin nombre' },
+  categoria:   { titulo: 'Categoría', de: f => f.categoria },
+  cajero:      { titulo: 'Cajero',    de: f => f.cajero || 'Sin cajero' },
+  hora:        { titulo: 'Hora',      de: f => f.franja, orden: 'clave' },
 };
 
 const REP = { tipo: 'ventas', nivel: 'dia', desde: '', hasta: '', metodoPago: 'todos', datos: null };
@@ -93,6 +107,19 @@ function costoDeRenglon(item) {
   return 0;                       // venta libre o producto sin costo capturado
 }
 
+/** Categoría del producto vendido; lo que no es del catálogo se nombra por su tipo. */
+function categoriaDeRenglon(item, venta) {
+  if (item.tipo === 'recarga' || venta.tipo === 'recarga') return 'Recargas';
+  if (item.productoId) return (buscarProducto(item.productoId)?.categoria || '').trim() || 'Sin categoría';
+  return 'Venta libre';
+}
+
+/** "14:00" para cualquier hora entre 14:00 y 14:59. */
+function franjaDe(fechaHora) {
+  const d = new Date(fechaHora);
+  return isNaN(d) ? 'Sin hora' : String(d.getHours()).padStart(2, '0') + ':00';
+}
+
 /** Recorre los movimientos del periodo entregando renglón por renglón. */
 function renglonesDeVenta() {
   _sinCosto = 0;
@@ -111,6 +138,7 @@ function renglonesDeVenta() {
           tipo: 'Envío', producto: `Comisión por envío de ${fmt(v.montoEnviado)}`, codigo: '',
           cantidad: 1, precio: com, venta: com, costo: 0, ganancia: com,
           cajero: v.cajero || '', cliente: v.cliente || '',
+          categoria: 'Envíos de dinero', franja: franjaDe(v.fechaHora),
         });
         return;
       }
@@ -127,6 +155,7 @@ function renglonesDeVenta() {
           cantidad: cant, precio: num(i.precio),
           venta, costo, ganancia: redondear(venta - costo),
           cajero: v.cajero || '', cliente: v.cliente || '',
+          categoria: categoriaDeRenglon(i, v), franja: franjaDe(v.fechaHora),
         });
       });
     });
@@ -154,7 +183,64 @@ function repVentas() {
   const gananciaTotal = redondear(ventaTotal - costoTotal);
   const tickets = movs.filter(v => v.tipo === 'venta').length;
 
-  if (REP.nivel === 'producto') {
+  if (GRUPOS[REP.nivel]) {
+    /* --- agrupado: producto, categoría, cajero u hora --- */
+    const g = GRUPOS[REP.nivel];
+    const grupos = new Map();
+    renglones.forEach(f => {
+      const k = g.de(f);
+      const x = grupos.get(k) || { nombre: k, piezas: 0, venta: 0, costo: 0, ganancia: 0, _tickets: new Set() };
+      x.piezas += f.cantidad; x.venta += f.venta; x.costo += f.costo; x.ganancia += f.ganancia;
+      x._tickets.add(f._venta.id);
+      grupos.set(k, x);
+    });
+    filas = [...grupos.values()].map(x => ({
+      nombre: x.nombre, tickets: x._tickets.size, piezas: redondear(x.piezas, 3),
+      venta: redondear(x.venta), costo: redondear(x.costo), ganancia: redondear(x.ganancia),
+      margen: margenPct(x.ganancia, x.venta),
+      pct: ventaTotal > 0 ? `${fmtNum((x.venta / ventaTotal) * 100, 1)}%` : '—',
+    }));
+    filas.sort(g.orden === 'clave'
+      ? (a, b) => String(a.nombre).localeCompare(String(b.nombre))
+      : (a, b) => b.venta - a.venta);
+    columnas = [
+      { titulo: g.titulo, clave: 'nombre', tipo: 'texto' },
+      { titulo: 'Tickets', clave: 'tickets', tipo: 'numero' },
+      { titulo: 'Piezas', clave: 'piezas', tipo: 'numero' },
+      COL_DINERO('Venta', 'venta'), COL_DINERO('Costo', 'costo'), COL_DINERO('Ganancia', 'ganancia'),
+      { titulo: 'Margen', clave: 'margen', tipo: 'texto' },
+      { titulo: '% de la venta', clave: 'pct', tipo: 'texto' },
+    ];
+    totales = { nombre: 'TOTAL', tickets, piezas: redondear(filas.reduce((a, f) => a + num(f.piezas), 0), 3),
+                venta: ventaTotal, costo: costoTotal, ganancia: gananciaTotal,
+                margen: margenPct(gananciaTotal, ventaTotal), pct: ventaTotal > 0 ? '100%' : '—' };
+
+  } else if (REP.nivel === 'metodo') {
+    /* --- por forma de pago: cuánto entró por cada una (ventas menos devoluciones) --- */
+    const pm = new Map();
+    movs.filter(v => v.tipo === 'venta' || v.tipo === 'devolucion').forEach(v => {
+      const signo = v.tipo === 'devolucion' ? -1 : 1;
+      (v.pagos || []).forEach(p => {
+        const x = pm.get(p.metodo) || { nombre: METODOS_PAGO[p.metodo]?.label || p.metodo, _t: new Set(), monto: 0 };
+        x.monto += signo * num(p.monto);
+        if (v.tipo === 'venta') x._t.add(v.id);
+        pm.set(p.metodo, x);
+      });
+    });
+    const totalMonto = redondear([...pm.values()].reduce((a, x) => a + x.monto, 0));
+    filas = [...pm.values()].map(x => ({
+      nombre: x.nombre, tickets: x._t.size, monto: redondear(x.monto),
+      pct: totalMonto > 0 ? `${fmtNum((x.monto / totalMonto) * 100, 1)}%` : '—',
+    })).sort((a, b) => b.monto - a.monto);
+    columnas = [
+      { titulo: 'Forma de pago', clave: 'nombre', tipo: 'texto' },
+      { titulo: 'Tickets', clave: 'tickets', tipo: 'numero' },
+      COL_DINERO('Monto cobrado', 'monto'),
+      { titulo: '% del total', clave: 'pct', tipo: 'texto' },
+    ];
+    totales = { nombre: 'TOTAL', tickets, monto: totalMonto, pct: totalMonto > 0 ? '100%' : '—' };
+
+  } else if (REP.nivel === 'producto') {
     filas = renglones;
     columnas = [
       { titulo: 'Folio', clave: 'folio', tipo: 'texto' },
