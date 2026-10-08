@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '57';
+const VERSION_APP = '58';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '57';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '58': [
+    'Consultar ticket: los pagos de fiado ahora se llaman "Pago de fiado" y tienen su propio filtro, junto con otro de "Fiados" (lo que se llevaron a crédito) y uno de "Envíos". Al abrir la ventana siempre empieza en "Todos": si la vez anterior se quedó en "Ventas", los pagos de fiado no aparecían.',
+  ],
   '57': [
     'Reportes → Ventas y ganancias ahora se puede separar por producto, categoría, cajero, hora del día y forma de pago, además de por día, ticket y renglón. Cada grupo muestra tickets, piezas, venta, costo, ganancia, margen y qué porcentaje de la venta representa, y se puede imprimir o exportar a CSV.',
   ],

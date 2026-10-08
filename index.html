@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="57"/>
+<meta name="tanichi-version" content="58"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=57"/>
+<link rel="stylesheet" href="style.css?v=58"/>
 </head>
 <body>
 
@@ -1217,9 +1217,11 @@
       <div id="cs-filtros" class="chips">
         <button class="chip" data-tipo="todos"      onclick="filtrarConsulta('todos')">Todos</button>
         <button class="chip" data-tipo="venta"      onclick="filtrarConsulta('venta')">Ventas</button>
-        <button class="chip" data-tipo="abono"      onclick="filtrarConsulta('abono')">Abonos</button>
+        <button class="chip" data-tipo="fiado"      onclick="filtrarConsulta('fiado')">Fiados</button>
+        <button class="chip" data-tipo="abono"      onclick="filtrarConsulta('abono')">Pagos de fiado</button>
         <button class="chip" data-tipo="recarga"    onclick="filtrarConsulta('recarga')">Recargas</button>
         <button class="chip" data-tipo="devolucion" onclick="filtrarConsulta('devolucion')">Devoluciones</button>
+        <button class="chip" data-tipo="envio"      onclick="filtrarConsulta('envio')">Envíos</button>
       </div>
       <p id="cs-conteo" class="hint"></p>
       <div id="cs-lista" class="bv-lista"></div>
@@ -1589,17 +1591,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=57"></script>
-<script src="js/iconos.js?v=57"></script>
-<script src="js/turno.js?v=57"></script>
-<script src="js/pos.js?v=57"></script>
-<script src="js/inventario.js?v=57"></script>
-<script src="js/corte.js?v=57"></script>
-<script src="js/historial.js?v=57"></script>
-<script src="js/reportes.js?v=57"></script>
-<script src="js/fotos.js?v=57"></script>
-<script src="js/fiados.js?v=57"></script>
-<script src="js/mercadopago.js?v=57"></script>
-<script src="js/app.js?v=57"></script>
+<script src="js/core.js?v=58"></script>
+<script src="js/iconos.js?v=58"></script>
+<script src="js/turno.js?v=58"></script>
+<script src="js/pos.js?v=58"></script>
+<script src="js/inventario.js?v=58"></script>
+<script src="js/corte.js?v=58"></script>
+<script src="js/historial.js?v=58"></script>
+<script src="js/reportes.js?v=58"></script>
+<script src="js/fotos.js?v=58"></script>
+<script src="js/fiados.js?v=58"></script>
+<script src="js/mercadopago.js?v=58"></script>
+<script src="js/app.js?v=58"></script>
 </body>
 </html>

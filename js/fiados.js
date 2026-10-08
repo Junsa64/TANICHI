@@ -372,6 +372,7 @@ function aCSV(filas) {
 
 function abrirConsulta() {
   CONSULTA.busqueda = '';
+  CONSULTA.tipo = 'todos';   // si se quedó en "Ventas" de la vez anterior, los pagos de fiado no salían
   setVal('cs-buscar', '');
   renderConsulta();
   abrirModal('modal-consulta');
@@ -381,7 +382,7 @@ function buscarConsulta(v) { CONSULTA.busqueda = v; renderConsulta(); }
 function filtrarConsulta(t) { CONSULTA.tipo = t; renderConsulta(); }
 
 const ETIQUETA_MOV = {
-  venta: 'Venta', abono: 'Abono', recarga: 'Recarga', devolucion: 'Devolución', envio: 'Envío',
+  venta: 'Venta', abono: 'Pago de fiado', recarga: 'Recarga', devolucion: 'Devolución', envio: 'Envío',
   saldoInicial: 'Deuda anterior',
 };
 
@@ -404,7 +405,12 @@ function renderConsulta() {
   $$('#cs-filtros .chip').forEach(b => b.classList.toggle('activo', b.dataset.tipo === CONSULTA.tipo));
 
   let movs = getVentas();
-  if (CONSULTA.tipo !== 'todos') movs = movs.filter(v => (v.tipo || 'venta') === CONSULTA.tipo);
+  if (CONSULTA.tipo === 'fiado') {
+    // Lo que se llevaron fiado: ventas con alguna parte a crédito
+    movs = movs.filter(v => (v.tipo || 'venta') === 'venta' && (v.pagos || []).some(p => p.metodo === 'credito' && num(p.monto) > 0));
+  } else if (CONSULTA.tipo !== 'todos') {
+    movs = movs.filter(v => (v.tipo || 'venta') === CONSULTA.tipo);
+  }
   if (q) {
     movs = movs.filter(v => {
       const texto = `${v.folio} ${v.cliente || ''} ${v.cajero || ''} ${fechaCorta(v.fecha)} ` +
