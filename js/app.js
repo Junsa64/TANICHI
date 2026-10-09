@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '58';
+const VERSION_APP = '59';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '58';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '59': [
+    'Buscador del punto de venta: al volver a él —con un clic, Tab o F2— lo que había escrito queda seleccionado y lo nuevo lo reemplaza; ya no se encima ni se suma a la búsqueda anterior. Lo mismo al empezar a escribir estando parado en un producto.',
+  ],
   '58': [
     'Consultar ticket: los pagos de fiado ahora se llaman "Pago de fiado" y tienen su propio filtro, junto con otro de "Fiados" (lo que se llevaron a crédito) y uno de "Envíos". Al abrir la ventana siempre empieza en "Todos": si la vez anterior se quedó en "Ventas", los pagos de fiado no aparecían.',
   ],

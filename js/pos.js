@@ -107,6 +107,15 @@ function renderCategorias() {
    se usan con el ratón— para que Tab no se pierda en ellos. */
 let _tecladoPosListo = false;
 function prepararTecladoPos() {
+  // Al volver al buscador (clic, Tab, F2) lo escrito queda seleccionado: lo
+  // siguiente que se teclee lo reemplaza en vez de sumarse.
+  const buscar = document.getElementById('pos-buscar');
+  if (buscar && !buscar.dataset.listo) {
+    buscar.dataset.listo = '1';
+    let recienEnfocado = false;
+    buscar.addEventListener('focus', () => { recienEnfocado = true; buscar.select(); });
+    buscar.addEventListener('mouseup', (ev) => { if (recienEnfocado) { ev.preventDefault(); recienEnfocado = false; } });
+  }
   document.querySelectorAll('.pos-barra .btn, .pos-vista-sw button').forEach(b => b.setAttribute('tabindex', '-1'));
   if (_tecladoPosListo) return;
   const cont = document.getElementById('pos-productos');
@@ -133,7 +142,8 @@ function prepararTecladoPos() {
     else if (ev.key === 'Escape') { const b = document.getElementById('pos-buscar'); if (b) { b.focus(); b.select(); ev.preventDefault(); } }
     // Escribir estando en un producto vuelve a la búsqueda con esa letra
     else if (ev.key.length === 1 && !ev.ctrlKey && !ev.altKey && !ev.metaKey && ev.key !== ' ') {
-      const b = document.getElementById('pos-buscar'); if (b) b.focus();
+      const b = document.getElementById('pos-buscar');
+      if (b) { b.value = ''; POS.busqueda = ''; b.focus(); }   // empieza de cero, no sobre lo anterior
     }
   });
 }
