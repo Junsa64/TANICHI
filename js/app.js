@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '59';
+const VERSION_APP = '60';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '59';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '60': [
+    'Fiados: ahora se puede eliminar la cuenta de una persona, desde la lista o desde su estado de cuenta. Pide confirmación y no borra nada del dinero ya registrado: las ventas y pagos siguen en el corte, los tickets y los reportes; sólo dejan de formar la cuenta de fiado.',
+  ],
   '59': [
     'Buscador del punto de venta: al volver a él —con un clic, Tab o F2— lo que había escrito queda seleccionado y lo nuevo lo reemplaza; ya no se encima ni se suma a la búsqueda anterior. Lo mismo al empezar a escribir estando parado en un producto.',
   ],

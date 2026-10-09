@@ -36,7 +36,7 @@ function cuentasFiado() {
   const movs = [...getVentas()].sort((a, b) => String(a.fechaHora).localeCompare(String(b.fechaHora)));
 
   movs.forEach(v => {
-    if (v.cancelada) return;
+    if (v.cancelada || v.fiadoOculto) return;   // cuenta eliminada de Fiados
     const nombre = String(v.cliente || '').trim();
     if (!nombre) return;
 
@@ -194,6 +194,8 @@ function renderFiados() {
               ${icono('recibo', 15)} Ver cuenta</button>
             ${c.saldo > 0.005 ? `<button class="btn btn-primary compacto" onclick="abonarA('${esc(c.nombre)}')">
               ${icono('billete', 15)} Abonar</button>` : ''}
+            <button class="btn btn-ghost compacto peligro-suave" title="Eliminar esta cuenta de Fiados"
+                    onclick="eliminarCuentaFiado('${esc(c.clave)}')">${icono('bote', 15)} Eliminar</button>
           </div></td>
         </tr>`;
       }).join('')}</tbody>
@@ -253,6 +255,8 @@ function renderCuenta() {
         </tr>`).join('')}</tbody>
     </table>`);
 
+  const del = document.getElementById('btn-eliminar-cuenta');
+  if (del) del.setAttribute('onclick', `eliminarCuentaFiado('${esc(c.clave)}')`);
   const btn = document.getElementById('btn-abonar-cuenta');
   if (btn) {
     btn.disabled = c.saldo <= 0.005;
@@ -318,6 +322,40 @@ function guardarAltaFiado() {
 }
 
 /** Abre el cobro de abono ya con el cliente puesto. */
+/** Quita una cuenta de la lista de Fiados. No toca el dinero ya registrado:
+    las ventas y abonos siguen en el corte, los tickets y los reportes; sólo
+    dejan de formar la cuenta de esa persona. La "deuda anterior" capturada a
+    mano no es una venta y sí se borra por completo. */
+async function eliminarCuentaFiado(clave) {
+  const c = cuentasFiado().find(x => x.clave === clave);
+  if (!c) { toast('No se encontró esa cuenta.', 'error'); return; }
+  const debe = c.saldo > 0.005
+    ? `Hoy debe <strong>${fmt(c.saldo)}</strong>: esa deuda dejará de contarse.`
+    : 'Su cuenta está saldada.';
+  const ok = await confirmar({
+    titulo: 'Eliminar cuenta de fiado',
+    mensaje: `Se eliminará la cuenta de <strong>${esc(c.nombre)}</strong> de Fiados. ${debe}<br>
+      Las ventas y los pagos ya registrados <strong>no se borran</strong>: siguen en el corte, los tickets y los reportes.`,
+    ok: 'Eliminar cuenta', peligro: true,
+  });
+  if (!ok) return;
+
+  let ventas = getVentas();
+  ventas.forEach(v => {
+    if (claveCliente(v.cliente) !== clave) return;
+    if (v.tipo === 'saldoInicial') v._borrar = true;
+    else v.fiadoOculto = true;
+  });
+  ventas = ventas.filter(v => !v._borrar);
+  setVentas(ventas);
+
+  if (FIADOS.cuentaAbierta === clave) { FIADOS.cuentaAbierta = null; cerrarModal('modal-cuenta'); }
+  renderFiados();
+  if (typeof actualizarEstadoGlobal === 'function') actualizarEstadoGlobal();
+  respaldarPronto('eliminar-fiado');
+  toast(`Cuenta de ${c.nombre} eliminada de Fiados.`, 'success');
+}
+
 function abonarA(nombre) {
   if (!exigirTurnoAbierto()) return;
   cerrarModal('modal-cuenta');
