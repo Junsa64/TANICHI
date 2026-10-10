@@ -9,6 +9,9 @@
 
 let MP_TERMINALES = [];
 
+/** Hay una terminal conectada y en modo punto de venta: el cobro con tarjeta puede ir por ella. */
+function mpTerminalListo() { return MP_TERMINALES.some(d => d.operating_mode === 'PDV'); }
+
 async function llamarMP(ruta, opciones = {}) {
   const r = await fetch(ruta, { cache: 'no-store', ...opciones });
   let datos;
@@ -241,6 +244,8 @@ async function iniciarCobroTerminalMP() {
   }
   if (btn) btn.disabled = !!(tar && tar.confirmadoTerminal);
   renderCobro();
+  // Aprobado en la terminal = venta registrada, sin otro paso
+  if (tar.confirmadoTerminal && POS.cobro === c) confirmarCobro();
 }
 
 /** Botón "Ya se cobró en la terminal": para cuando Mercado Pago avisa que
@@ -253,6 +258,7 @@ function confirmarCobroTerminalManual() {
   tar.confirmadoTerminal = true;
   tar.requiereConfirmacionManual = false;
   renderCobro();
+  confirmarCobro();
 }
 
 function mostrarEsperaMP(monto) {

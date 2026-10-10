@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '60';
+const VERSION_APP = '61';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '60';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '61': [
+    'Cobro con tarjeta sin "Confirmar cobro": cuando la terminal de Mercado Pago confirma el pago, la venta se registra sola. Así ya no queda un cobro hecho en la terminal que no esté en el sistema. El botón de cobrar en la terminal se habilita cuando el reparto del pago está completo, y Enter lo activa. Sin terminal conectada, todo sigue como antes.',
+  ],
   '60': [
     'Fiados: ahora se puede eliminar la cuenta de una persona, desde la lista o desde su estado de cuenta. Pide confirmación y no borra nada del dinero ya registrado: las ventas y pagos siguen en el corte, los tickets y los reportes; sólo dejan de formar la cuenta de fiado.',
   ],
@@ -723,6 +726,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   pintarIconos();          // rellena los <span data-ico> del HTML estático
   iniciarReloj();
   iniciarAtajos();
+  if (typeof probarConexionMPSilencioso === 'function') probarConexionMPSilencioso().catch(() => {});   // ¿hay terminal lista? decide si el cobro con tarjeta es automático
   activarCamposCalculadora(document);
   refrescarDatalists();
   actualizarEstadoGlobal();

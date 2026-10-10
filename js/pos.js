@@ -1107,16 +1107,15 @@ function renderCobro() {
 
   /* tarjeta: ofrece mandar el cobro a la terminal de Mercado Pago */
   const tar = c.pagos.find(p => p.metodo === 'tarjeta');
-  show('cobro-tarjeta-mp', !!tar, 'block');
-  if (tar) {
+  const hayTerminal = typeof mpTerminalListo === 'function' && mpTerminalListo();
+  show('cobro-tarjeta-mp', !!tar && hayTerminal, 'block');
+  if (tar && hayTerminal) {
     setText('cobro-tarjeta-mp-monto', fmt(tar.monto));
     setText('cobro-tarjeta-mp-estado', tar.confirmadoTerminal
       ? '✓ Confirmado por la terminal.'
       : tar.requiereConfirmacionManual
         ? '⚠ Mercado Pago no pudo confirmar sola. Mira la pantalla de la terminal: si dice "aprobado", da clic abajo.'
         : '');
-    const btn = document.getElementById('btn-cobrar-terminal-mp');
-    if (btn) btn.disabled = !!tar.confirmadoTerminal;
     show('btn-confirmar-terminal-manual', !!tar.requiereConfirmacionManual && !tar.confirmadoTerminal, 'block');
   }
 
@@ -1167,7 +1166,17 @@ function renderCobro() {
     else if (pideNombre && !nombre)  aviso.innerHTML = `<span class="pill pill-warn">${esAbono ? 'Escribe de quién es el abono' : 'Escribe el nombre del cliente que se lleva fiado'}</span>`;
     else                             aviso.innerHTML = `<span class="pill pill-ok">Listo para cobrar</span>`;
   }
-  if (btn) btn.disabled = !listo;
+  /* Con tarjeta y terminal conectada no hay "Confirmar cobro": la venta se
+     registra sola en cuanto la terminal confirma el pago, así nunca queda un
+     cobro hecho en la terminal sin registrar en el sistema. Si la terminal
+     no está conectada, el botón sigue como siempre. */
+  const modoTerminal = !!tar && hayTerminal && !tar.confirmadoTerminal;
+  const btnTerm = document.getElementById('btn-cobrar-terminal-mp');
+  if (btnTerm) btnTerm.disabled = !!(tar && tar.confirmadoTerminal) || !listo;
+  if (btn) {
+    btn.style.display = modoTerminal ? 'none' : '';
+    btn.disabled = !listo || modoTerminal;
+  }
 }
 
 function fijarCliente(valor) {

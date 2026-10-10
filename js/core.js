@@ -326,6 +326,15 @@ document.addEventListener('keydown', atraparTab, true);
 function accionPrincipalModal(modal) {
   if (!modal) return false;
   if (modal.id === 'modal-ticket') { cerrarModal('modal-ticket'); return true; }
+  // Cobro con terminal: Enter manda el cobro a la terminal (no hay "Confirmar")
+  if (modal.id === 'modal-cobro') {
+    const t = document.getElementById('btn-cobrar-terminal-mp');
+    const conf = document.getElementById('btn-confirmar-cobro');
+    if (t && t.offsetParent !== null && conf && conf.style.display === 'none') {
+      if (!t.disabled) t.click();
+      return true;
+    }
+  }
   const btn = modal.querySelector('.modal-pie .btn-primary:not([disabled])');
   if (btn) { btn.click(); return true; }
   return false;
