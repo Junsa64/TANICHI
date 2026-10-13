@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '61';
+const VERSION_APP = '62';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '61';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '62': [
+    'Consultar ticket: las recargas del turno en curso ahora tienen botón "Eliminar" (pide confirmación). La recarga queda marcada como cancelada, deja de contar en el corte y se conserva en el historial.',
+  ],
   '61': [
     'Cobro con tarjeta sin "Confirmar cobro": cuando la terminal de Mercado Pago confirma el pago, la venta se registra sola. Así ya no queda un cobro hecho en la terminal que no esté en el sistema. El botón de cobrar en la terminal se habilita cuando el reparto del pago está completo, y Enter lo activa. Sin terminal conectada, todo sigue como antes.',
   ],

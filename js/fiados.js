@@ -491,6 +491,9 @@ function renderConsulta() {
           ${tipo === 'venta' && !v.cancelada ? `
             <button class="btn btn-ghost compacto" onclick="cerrarModal('modal-consulta'); abrirDevolucion('${v.id}')">
               ${icono('regresar', 15)} Devolver</button>` : ''}
+          ${tipo === 'recarga' && !v.cancelada && mismoTurno ? `
+            <button class="btn btn-ghost compacto peligro-suave" onclick="cancelarVenta('${v.id}').then(renderConsulta)">
+              ${icono('bote', 15)} Eliminar</button>` : ''}
           ${tipo === 'venta' && !v.cancelada && mismoTurno ? `
             <button class="btn btn-ghost compacto peligro-suave" onclick="cerrarModal('modal-consulta'); corregirVenta('${v.id}')">
               ${icono('lapiz', 15)} Corregir</button>` : ''}
