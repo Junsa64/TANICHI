@@ -253,6 +253,34 @@ function gruposDeInventario() {
 /** Junta de un jalón los productos que se repitieron: conserva un solo
  *  renglón por grupo y le suma la existencia de los demás —no se pierde
  *  inventario, sólo se destraban los renglones de más—. */
+/** Pone en cero la existencia de todos los productos para empezar un conteo
+    nuevo. Los productos, precios, costos y fotos se quedan tal cual. */
+async function dejarInventarioEnCeros() {
+  const productos = getProductos();
+  const conExistencia = productos.filter(p => num(p.stock) !== 0);
+  if (!productos.length) { toast('Todavía no hay productos.', 'info'); return; }
+  if (!conExistencia.length) { toast('Todos los productos ya están en cero.', 'info'); return; }
+
+  const piezas = redondear(conExistencia.reduce((s, p) => s + num(p.stock), 0), 3);
+  const ok = await confirmar({
+    titulo: 'Dejar todas las existencias en cero',
+    mensaje: `Se pondrá en <strong>0</strong> la existencia de <strong>${fmtNum(conExistencia.length)}</strong> producto(s)
+              (${fmtNum(piezas, piezas % 1 ? 2 : 0)} pieza(s) en total).<br><br>
+              Los productos <strong>no se borran</strong>: se conservan nombre, precio, costo, categoría y foto.
+              Después puedes capturar lo que de verdad tienes con "Entrada" o editando cada producto.<br><br>
+              Esto no se puede deshacer desde la app; antes se guarda un respaldo si tienes carpeta configurada.`,
+    ok: 'Dejar en cero', peligro: true,
+  });
+  if (!ok) return;
+
+  try { await Respaldo.escribir('antes-de-ceros'); } catch { /* sin carpeta de respaldo: se sigue */ }
+  setProductos(productos.map(p => ({ ...p, stock: 0 })));
+  renderInventario();
+  renderPos();
+  respaldarPronto('inventario');
+  toast(`${fmtNum(conExistencia.length)} producto(s) quedaron en cero.`, 'success', 5000);
+}
+
 async function eliminarDuplicadosInventario() {
   const grupos = gruposDeInventario();
   const repetidos = [...grupos.values()].filter(g => g.length > 1);

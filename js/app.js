@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '62';
+const VERSION_APP = '63';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '62';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '63': [
+    'Inventario: nuevo botón "Dejar existencias en cero" para empezar un conteo desde cero. Pone en 0 la existencia de todos los productos sin borrarlos (se conservan nombre, precio, costo, categoría y foto). Pide confirmación y guarda un respaldo antes si hay carpeta configurada.',
+  ],
   '62': [
     'Consultar ticket: las recargas del turno en curso ahora tienen botón "Eliminar" (pide confirmación). La recarga queda marcada como cancelada, deja de contar en el corte y se conserva en el historial.',
   ],
