@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '63';
+const VERSION_APP = '64';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '63';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '64': [
+    'Códigos de barras: si un producto "no se encuentra" pero al agregarlo dice que ya existe, es porque estaba marcado como inactivo (oculto del punto de venta). Ahora, al escanear su código, la app avisa y ofrece activarlo y agregarlo al ticket; y el aviso de código repetido dice qué producto es y si está inactivo. La búsqueda por código también ignora espacios sobrantes.',
+  ],
   '63': [
     'Inventario: nuevo botón "Dejar existencias en cero" para empezar un conteo desde cero. Pone en 0 la existencia de todos los productos sin borrarlos (se conservan nombre, precio, costo, categoría y foto). Pide confirmación y guarda un respaldo antes si hay carpeta configurada.',
   ],

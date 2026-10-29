@@ -177,8 +177,10 @@ function guardarProducto() {
   const productos = getProductos();
 
   // El código/SKU debe ser único: es lo que usa el lector de barras
-  if (sku && productos.some(p => p.id !== INV.editandoId && String(p.sku).toLowerCase() === sku.toLowerCase())) {
-    toast(`Ya existe otro producto con el código "${sku}".`, 'error');
+  const repetido = sku && productos.find(p => p.id !== INV.editandoId && String(p.sku || '').trim().toLowerCase() === sku.toLowerCase());
+  if (repetido) {
+    toast(`Ya existe "${repetido.nombre}" con el código "${sku}"` +
+          (repetido.activo === false ? ' (está inactivo, por eso no sale en el punto de venta: actívalo desde Inventario).' : '.'), 'error', 8000);
     return;
   }
 

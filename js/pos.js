@@ -175,6 +175,8 @@ function limpiarBusqueda() {
 
 /** Enter en el buscador: si hay un único resultado (o un SKU exacto) lo agrega
  *  directo. Así funciona igual que un lector de código de barras. */
+const _sku = (p) => String(p.sku || '').trim().toLowerCase();
+
 function onBuscarKey(ev) {
   if (ev.key === 'ArrowDown') {
     const p = document.querySelector('#pos-productos .producto');
@@ -188,9 +190,15 @@ function onBuscarKey(ev) {
   ev.preventDefault();
   const q = POS.busqueda;
   if (!q) return;
-  const activos = getProductos().filter(p => p.activo !== false);
-  const exacto  = activos.find(p => String(p.sku || '').toLowerCase() === q);
+  const todos   = getProductos();
+  const activos = todos.filter(p => p.activo !== false);
+  const exacto  = activos.find(p => _sku(p) === q);
   const lista   = exacto ? [exacto] : filtrarProductos(activos);
+  if (!exacto && !lista.length) {
+    // El código existe pero el producto está oculto del punto de venta
+    const oculto = todos.find(p => p.activo === false && _sku(p) === q);
+    if (oculto) { reactivarYAgregar(oculto.id); return; }
+  }
   if (lista.length === 1) {
     agregarAlCarrito(lista[0].id);
     ev.target.value = '';
@@ -199,6 +207,28 @@ function onBuscarKey(ev) {
   } else if (lista.length === 0) {
     toast('Ningún producto coincide con esa búsqueda.', 'warn');
   }
+}
+
+/** El producto con ese código está marcado como inactivo: no sale en el punto
+    de venta aunque el código exista. Se ofrece activarlo en el momento. */
+async function reactivarYAgregar(id) {
+  const p = buscarProducto(id);
+  if (!p) return;
+  const ok = await confirmar({
+    titulo: 'Producto inactivo',
+    mensaje: `El código pertenece a <strong>${esc(p.nombre)}</strong>, pero ese producto está marcado como
+              <strong>inactivo</strong> y por eso no aparece en el punto de venta.<br><br>¿Activarlo y agregarlo al ticket?`,
+    ok: 'Activar y agregar',
+  });
+  if (!ok) return;
+  const productos = getProductos();
+  const prod = productos.find(x => x.id === id);
+  if (prod) { prod.activo = true; setProductos(productos); }
+  agregarAlCarrito(id);
+  const b = document.getElementById('pos-buscar');
+  if (b) { b.value = ''; b.focus(); }
+  POS.busqueda = '';
+  renderProductos();
 }
 
 function filtrarProductos(base = getProductos().filter(p => p.activo !== false)) {
