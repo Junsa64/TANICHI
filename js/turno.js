@@ -75,7 +75,7 @@ function turnoVacio() {
   return {
     id: null,
     abierto: false,
-    cajero: (s && s.cajero) || (CONFIG.cajeros && CONFIG.cajeros[0]) || 'Cajero',
+    cajero: (s && s.cajero) || (CONFIG.cajeros && CONFIG.cajeros[0]) || '',
     fecha: hoyISO(),
     horario: (s && s.horario) || (CONFIG.turnos && CONFIG.turnos[0] && CONFIG.turnos[0].horario) || '',
     // Mientras nadie elija a mano, el horario sigue a la hora del día
@@ -721,6 +721,11 @@ async function abrirTurno() {
       ok: 'Sí, abrir así',
     });
     if (!ok) return;
+  }
+
+  // El nombre que se escribió con "Otro…" queda guardado en la lista de responsables
+  if (!(CONFIG.cajeros || []).some(n => String(n).trim().toLowerCase() === cajero.toLowerCase())) {
+    saveConfig({ cajeros: [...(CONFIG.cajeros || []), cajero] });
   }
 
   TURNO.id       = TURNO.id || nuevoId('trn');

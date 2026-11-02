@@ -99,8 +99,7 @@ function renderSugerenciaTurno() {
     return;
   }
   el.style.display = 'flex';
-  el.innerHTML = `<span>${icono('reloj')}</span><div>Por la hora te toca <strong>${esc(s.horario)}</strong>
-    (${esc(s.cajero)}).
+  el.innerHTML = `<span>${icono('reloj')}</span><div>Por la hora te toca <strong>${esc(s.horario)}</strong>${s.cajero ? ` (${esc(s.cajero)})` : ''}.
     <button class="link" data-horario="${esc(s.horario)}" data-cajero="${esc(s.cajero)}"
             onclick="usarTurnoSugerido(this.dataset.horario, this.dataset.cajero)">Usar ese turno</button></div>`;
 }

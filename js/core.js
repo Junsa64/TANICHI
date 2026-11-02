@@ -63,12 +63,12 @@ const Store = {
 /* --------------------------------------------------------------- config */
 const CONFIG_DEFAULT = {
   negocio: 'EL TANICHI',
-  cajeros: ['Martha', 'Virginia'],
+  cajeros: [],                 // se agregan desde Ajustes y quedan guardados
   turnos: [
-    { horario: '8:00 a 11:00',  cajero: 'Martha'   },
-    { horario: '11:00 a 14:00', cajero: 'Virginia' },
-    { horario: '14:00 a 17:00', cajero: 'Martha'   },
-    { horario: '17:00 a 20:00', cajero: 'Virginia' },
+    { horario: '8:00 a 11:00',  cajero: '' },
+    { horario: '11:00 a 14:00', cajero: '' },
+    { horario: '14:00 a 17:00', cajero: '' },
+    { horario: '17:00 a 20:00', cajero: '' },
   ],
   comisionTerminalPct: 4.06,   // % que cobra la terminal por venta con tarjeta
   recargaCada: 50,             // por cada $50 de recarga…
@@ -98,8 +98,17 @@ function loadConfig() {
   CONFIG.comisionTerminalPct = clamp(num(CONFIG.comisionTerminalPct, 4.06), 0, 100);
   CONFIG.recargaCada  = Math.max(1, num(CONFIG.recargaCada, 50));
   CONFIG.recargaMonto = Math.max(0, num(CONFIG.recargaMonto, 2));
-  if (!Array.isArray(CONFIG.cajeros) || !CONFIG.cajeros.length) CONFIG.cajeros = [...CONFIG_DEFAULT.cajeros];
+  if (!Array.isArray(CONFIG.cajeros)) CONFIG.cajeros = [];
   if (!Array.isArray(CONFIG.turnos)  || !CONFIG.turnos.length)  CONFIG.turnos  = structuredClone(CONFIG_DEFAULT.turnos);
+  // Una sola vez: Martha y Virginia venían de fábrica y ya no. Se quitan de la
+  // lista y de los turnos; los nombres que haya agregado el dueño se quedan.
+  if (!CONFIG.cajerosDeFabricaQuitados) {
+    const deFabrica = (n) => ['martha', 'virginia'].includes(String(n || '').trim().toLowerCase());
+    CONFIG.cajeros = CONFIG.cajeros.filter(n => !deFabrica(n));
+    CONFIG.turnos = CONFIG.turnos.map(t => ({ ...t, cajero: deFabrica(t.cajero) ? '' : (t.cajero || '') }));
+    CONFIG.cajerosDeFabricaQuitados = true;
+    Store.set(DB.config, CONFIG);
+  }
   if (typeof aplicarAliasTarjetaCredito === 'function') aplicarAliasTarjetaCredito();
   return CONFIG;
 }

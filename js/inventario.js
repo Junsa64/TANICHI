@@ -65,9 +65,12 @@ function renderInventario() {
     return `${p.nombre} ${p.sku || ''} ${p.categoria || ''}`.toLowerCase().includes(INV.busqueda);
   });
 
+  const conControl = (p) => (p.controlaStock === false ? 0 : 1);
   const ordenes = {
     nombre: (a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'),
-    stock:  (a, b) => num(a.stock) - num(b.stock),
+    // Los que no llevan control de existencias van siempre al final
+    stock:     (a, b) => (conControl(b) - conControl(a)) || (num(a.stock) - num(b.stock)),
+    stockdesc: (a, b) => (conControl(b) - conControl(a)) || (num(b.stock) - num(a.stock)),
     precio: (a, b) => num(b.precio) - num(a.precio),
     categoria: (a, b) => String(a.categoria || '').localeCompare(String(b.categoria || ''), 'es')
                         || String(a.nombre).localeCompare(String(b.nombre), 'es'),
