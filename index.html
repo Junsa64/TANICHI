@@ -9,7 +9,7 @@
      así que este número siempre es el nuevo. Si el JavaScript que carga trae
      otro, es que quedó una copia vieja guardada: la app lo detecta al
      arrancar, la tira y se recarga sola. -->
-<meta name="tanichi-version" content="64"/>
+<meta name="tanichi-version" content="65"/>
 <link rel="icon" href="icon.png"/>
 <link rel="apple-touch-icon" href="icono-192.jpg"/>
 
@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=64"/>
+<link rel="stylesheet" href="style.css?v=65"/>
 </head>
 <body>
 
@@ -59,6 +59,7 @@
 
   <div class="cab-acciones">
     <span id="indicador-guardado" class="guardado" title="Los cambios se guardan solos">Guardado</span>
+    <button id="btn-actualizar-cab" class="btn btn-ghost" onclick="actualizarAhora()" title="Buscar e instalar la versión más reciente del programa"><span data-ico="bajar"></span> Actualizar</button>
     <button class="btn btn-ghost" onclick="abrirHistorial()" title="Historial y análisis (tecla H)"><span data-ico="grafica"></span> Historial</button>
     <button class="btn btn-ghost" onclick="abrirNovedades()" title="Qué cambió en cada actualización"><span data-ico="estrella"></span> Novedades</button>
     <div class="cab-esquina">
@@ -1593,17 +1594,17 @@
 
 <div id="toast-container" class="toasts no-imprimir"></div>
 
-<script src="js/core.js?v=64"></script>
-<script src="js/iconos.js?v=64"></script>
-<script src="js/turno.js?v=64"></script>
-<script src="js/pos.js?v=64"></script>
-<script src="js/inventario.js?v=64"></script>
-<script src="js/corte.js?v=64"></script>
-<script src="js/historial.js?v=64"></script>
-<script src="js/reportes.js?v=64"></script>
-<script src="js/fotos.js?v=64"></script>
-<script src="js/fiados.js?v=64"></script>
-<script src="js/mercadopago.js?v=64"></script>
-<script src="js/app.js?v=64"></script>
+<script src="js/core.js?v=65"></script>
+<script src="js/iconos.js?v=65"></script>
+<script src="js/turno.js?v=65"></script>
+<script src="js/pos.js?v=65"></script>
+<script src="js/inventario.js?v=65"></script>
+<script src="js/corte.js?v=65"></script>
+<script src="js/historial.js?v=65"></script>
+<script src="js/reportes.js?v=65"></script>
+<script src="js/fotos.js?v=65"></script>
+<script src="js/fiados.js?v=65"></script>
+<script src="js/mercadopago.js?v=65"></script>
+<script src="js/app.js?v=65"></script>
 </body>
 </html>

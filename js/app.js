@@ -316,6 +316,7 @@ async function alternarPantallaCompleta() {
 /** El navegador avisa cuando entra o sale, incluso si fue con F11. */
 document.addEventListener('fullscreenchange', () => {
   pintarBotonPantalla();
+  fetch('__origen', { cache: 'no-store' }).then(r => { HAY_SERVIDOR_LOCAL = r.ok; }).catch(() => {});
 });
 
 function pintarBotonPantalla() {
@@ -346,7 +347,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '64';
+const VERSION_APP = '65';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +355,9 @@ const VERSION_APP = '64';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '65': [
+    'Botón "Actualizar" en la barra de arriba, junto a Historial y Novedades: busca la versión nueva, avisa si hay y la instala sin tener que entrar a Ajustes.',
+  ],
   '64': [
     'Códigos de barras: si un producto "no se encuentra" pero al agregarlo dice que ya existe, es porque estaba marcado como inactivo (oculto del punto de venta). Ahora, al escanear su código, la app avisa y ofrece activarlo y agregarlo al ticket; y el aviso de código repetido dice qué producto es y si está inactivo. La búsqueda por código también ignora espacios sobrantes.',
   ],
@@ -580,8 +584,15 @@ const REPO_ACTUALIZACIONES = 'Junsa64/TANICHI';
 async function buscarActualizacionRemota() {
   const btn = document.getElementById('btn-actualizar-remota');
   const estado = document.getElementById('aj-remota-estado');
-  if (btn) btn.disabled = true;
-  if (estado) { estado.className = 'hint'; estado.textContent = 'Buscando en línea…'; }
+  // Desde Ajustes el resultado se escribe ahí; desde el botón de la cabecera, como aviso
+  const avisar = (txt, clase = '', tipo = 'info') => {
+    if (estado && estado.offsetParent !== null) { estado.className = 'hint ' + clase; estado.textContent = txt; }
+    else if (txt) toast(txt, tipo, 5000);
+  };
+  const btnCab = document.getElementById('btn-actualizar-cab');
+  const bloquear = (v) => { if (btn) btn.disabled = v; if (btnCab) btnCab.disabled = v; };
+  bloquear(true);
+  avisar('Buscando en línea…');
 
   let remota;
   try {
@@ -591,14 +602,14 @@ async function buscarActualizacionRemota() {
     if (!m) throw new Error('sin versión en la respuesta');
     remota = m[1];
   } catch (e) {
-    if (estado) { estado.className = 'hint malo'; estado.textContent = 'No se pudo revisar. ¿Hay internet?'; }
-    if (btn) btn.disabled = false;
+    avisar('No se pudo revisar. ¿Hay internet?', 'malo', 'error');
+    bloquear(false);
     return;
   }
 
   if (Number(remota) <= Number(VERSION_APP)) {
-    if (estado) { estado.className = 'hint bueno'; estado.textContent = `Ya tienes la última versión (v${VERSION_APP}).`; }
-    if (btn) btn.disabled = false;
+    avisar(`Ya tienes la última versión (v${VERSION_APP}).`, 'bueno', 'success');
+    bloquear(false);
     return;
   }
 
@@ -609,21 +620,29 @@ async function buscarActualizacionRemota() {
               <strong>Tus datos no se tocan.</strong>`,
     ok: 'Actualizar ahora',
   });
-  if (!ok) { if (btn) btn.disabled = false; if (estado) estado.textContent = ''; return; }
+  if (!ok) { bloquear(false); if (estado) estado.textContent = ''; return; }
 
-  if (estado) estado.textContent = 'Descargando…';
+  avisar('Descargando…');
   try {
     const r = await fetch('__actualizar', { method: 'POST' });
     const texto = await r.text();
     if (!r.ok || !texto.startsWith('ok')) throw new Error(texto || String(r.status));
   } catch (e) {
-    if (estado) { estado.className = 'hint malo'; estado.textContent = 'No se pudo descargar: ' + e.message; }
-    if (btn) btn.disabled = false;
+    avisar('No se pudo descargar: ' + e.message, 'malo', 'error');
+    bloquear(false);
     return;
   }
 
   toast(`Actualizado a v${remota}. Reiniciando…`, 'success', 3000);
   setTimeout(limpiarCopiaYRecargar, 900);
+}
+
+/** Botón "Actualizar" de la cabecera: con servidor local baja la versión nueva
+    del repositorio; sin él (archivo abierto directo) sólo refresca la copia. */
+let HAY_SERVIDOR_LOCAL = false;
+function actualizarAhora() {
+  if (HAY_SERVIDOR_LOCAL) buscarActualizacionRemota();
+  else forzarActualizacion();
 }
 
 /* ------------------------------------------------- instalar como app ----

@@ -1947,3 +1947,4 @@ body .cabecera, body.pos-pantalla .cabecera { position: static; }
 .pill-metodo { display: inline-flex; align-items: center; gap: 6px; background: var(--neutro); color: var(--tinta); }
 .pill-metodo.credito { background: var(--ambar-tinte); color: var(--ambar); }
 #cs-filtros, #bv-filtros { margin: var(--s3) 0 var(--s2); }
+@media (max-width: 1400px) { .cab-reloj { display: none; } }
