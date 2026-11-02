@@ -59,6 +59,7 @@ function renderInventario() {
       if (p.controlaStock === false || p.activo === false) return false;
       if (!(num(p.stock) <= num(p.stockMin, CONFIG.stockMinDefault))) return false;
     }
+    if (INV.filtro === 'conexistencia' && !(p.activo !== false && p.controlaStock !== false && num(p.stock) > 0)) return false;
     if (INV.filtro === 'inactivos' && p.activo !== false) return false;
     if (INV.filtro === 'todos' && p.activo === false) return false;
     if (!INV.busqueda) return true;

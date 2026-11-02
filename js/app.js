@@ -346,7 +346,7 @@ function pintarBotonCompactar() {
 /* ------------------------------------------------------------- versión ---
    Visible en Ajustes. Sirve para saber de un vistazo si el equipo está
    corriendo la copia nueva o una guardada de antes. */
-const VERSION_APP = '66';
+const VERSION_APP = '67';
 
 /* ------------------------------------------------------------ novedades ---
    Qué trae cada versión: se avisa solo apenas se instala (no en Ajustes,
@@ -354,6 +354,9 @@ const VERSION_APP = '66';
    con el botón "Novedades" de la barra de arriba. Se conservan las de
    versiones viejas para que ese botón muestre el historial completo. */
 const NOVEDADES = {
+  '67': [
+    'Inventario: nuevo filtro "Con existencia" para ver solo los productos activos que tienen unidades disponibles.',
+  ],
   '66': [
     'Martha y Virginia ya no vienen de fábrica: la lista de responsables empieza vacía y los nombres que agregues en Ajustes se quedan guardados. Al actualizar se quitan una sola vez los dos nombres de ejemplo.',
     'Inventario: ordenar por existencia ahora tiene dos opciones, de menor a mayor y de mayor a menor (los productos sin control de existencias van al final).',
